@@ -1,5 +1,7 @@
 #!/usr/bin/env zx
 /**
+ * Written using zx:
+ * https://google.github.io/zx
  * Source code mostly taken from official changeset github action:
  * https://github.com/changesets/action
  * Packages need to be imported at the beginning, otherwise they won't get installed.
@@ -13,43 +15,50 @@ import "remark-stringify";
 import "mdast-util-to-string";
 import "@changesets/pre";
 import "@changesets/read";
-import { getPackages } from "@manypkg/get-packages";
+import "@manypkg/get-packages";
+import { findRoot } from "@manypkg/find-root";
 import { runPublish, runVersion } from "./run.mjs";
 import { readChangesetState } from "./readChangesetState.mjs";
 // @ts-check
 
-console.log(process.env.example_step_input);
+// Version
+const shouldRunVersionScript = process.env.run_version;
+const versionScript = process.env.version_script;
+const versionCommitMessage = process.env.version_commit_message;
+// Publish
+const shouldRunPublishScript = process.env.run_publish;
+const publishScript = process.env.publish_script;
 
-const { rootDir } = await getPackages(`${process.cwd()}/../`); // TODO: change
+// Check whether there are any changesets
+const { rootDir } = await findRoot(process.cwd());
 console.log(rootDir);
 let { changesets } = await readChangesetState(rootDir);
 
-let publishScript = ""; // TODO: replace with bitrise input
 let hasChangesets = changesets.length !== 0;
 const hasNonEmptyChangesets = changesets.some(
   (changeset) => changeset.releases.length > 0
 );
-let hasPublishScript = !!publishScript;
 
-// core.setOutput("published", "false");
-// core.setOutput("publishedPackages", "[]");
-// core.setOutput("hasChangesets", String(hasChangesets));
+// Add output env variable
+await $`envman add --key CHANGESET_EXISTS --value "${hasChangesets}"`;
+await $`envman add --key CHANGESET_PUBLISHED --value "false"`;
 
-switch (true) {
-  case !hasChangesets && !hasPublishScript:
+switch (false) {
+  case !hasChangesets && !shouldRunPublishScript:
     console.info("No changesets found");
     break;
-  case !hasChangesets && hasPublishScript: {
+  case !hasChangesets && shouldRunPublishScript: {
     console.info(
       "No changesets found, attempting to publish any unpublished packages to npm"
     );
 
+    // Create .npmrc in user directory if it doesn't exist
     let userNpmrcPath = `${process.env.HOME}/.npmrc`;
     if (fs.existsSync(userNpmrcPath)) {
       console.info("Found existing user .npmrc file");
       const userNpmrcContent = await fs.readFile(userNpmrcPath, "utf8");
       const authLine = userNpmrcContent.split("\n").find((line) => {
-        // check based on https://github.com/npm/cli/blob/8f8f71e4dd5ee66b3b17888faad5a7bf6c657eed/test/lib/adduser.js#L103-L105
+        // Check based on https://github.com/npm/cli/blob/8f8f71e4dd5ee66b3b17888faad5a7bf6c657eed/test/lib/adduser.js#L103-L105
         return /^\s*\/\/registry\.npmjs\.org\/:[_-]authToken=/i.test(line);
       });
       if (authLine) {
@@ -73,32 +82,32 @@ switch (true) {
       );
     }
 
+    // Publish changesets
     const result = await runPublish({
+      cwd: rootDir,
       script: publishScript,
-      githubToken: "",
+      // githubToken: "",
       // createGithubReleases: core.getBooleanInput("createGithubReleases"),
     });
 
+    // Add output env variables
     if (result.published) {
-      // core.setOutput("published", "true");
-      // core.setOutput(
-      //   "publishedPackages",
-      //   JSON.stringify(result.publishedPackages)
-      // );
+      await $`envman add --key CHANGESET_PUBLISHED --value "true"`;
+      await $`envman add --key CHANGESET_PUBLISHED_PACKAGES --value "${JSON.stringify(result.publishedPackages)}"`;
     }
     break;
   }
   case hasChangesets && !hasNonEmptyChangesets:
     console.info("All changesets are empty; not creating PR");
     break;
-  case hasChangesets:
+  case hasChangesets && shouldRunVersionScript:
     const { pullRequestNumber } = await runVersion({
       cwd: rootDir,
-      // script: getOptionalInput("version"),
-      githubToken: "",
+      script: versionScript,
+      // githubToken: "",
       // prTitle: getOptionalInput("title"),
-      // commitMessage: getOptionalInput("commit"),
-      hasPublishScript,
+      commitMessage: versionCommitMessage,
+      hasPublishScript: shouldRunPublishScript,
     });
 
     // core.setOutput("pullRequestNumber", String(pullRequestNumber));

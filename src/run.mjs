@@ -8,7 +8,7 @@ import {
   sortTheThings,
   getVersionsByDirectory,
 } from "./utils.mjs";
-import * as gitUtils from "./gitUtils.mjs";
+import { pushTags } from "./gitUtils.mjs";
 import { readChangesetState } from "./readChangesetState.mjs";
 // @ts-check
 
@@ -66,20 +66,14 @@ const createRelease = async (
  */
 export async function runPublish({
   script,
-  githubToken,
-  createGithubReleases,
   cwd = process.cwd(),
 }) {
-  let [publishCommand, ...publishArgs] = script.split(/\s+/);
-  return;
-
-  let changesetPublishOutput = await getExecOutput(
-    publishCommand,
-    publishArgs,
-    { cwd }
-  );
-
-  await gitUtils.pushTags();
+  // Run publish script
+  cd(cwd);
+  await $`${script}`;
+  
+  // Push git tags
+  await pushTags();
 
   let { packages, tool } = await getPackages(cwd);
   let releasedPackages = [];
@@ -103,17 +97,6 @@ export async function runPublish({
       }
       releasedPackages.push(pkg);
     }
-/*
-    if (createGithubReleases) {
-      await Promise.all(
-        releasedPackages.map((pkg) =>
-          createRelease(octokit, {
-            pkg,
-            tagName: `${pkg.packageJson.name}@${pkg.packageJson.version}`,
-          })
-        )
-      );
-    } */
   } else {
     if (packages.length === 0) {
       throw new Error(
@@ -129,13 +112,6 @@ export async function runPublish({
 
       if (match) {
         releasedPackages.push(pkg);
-        /*
-        if (createGithubReleases) {
-          await createRelease(octokit, {
-            pkg,
-            tagName: `v${pkg.packageJson.version}`,
-          });
-        } */
         break;
       }
     }
@@ -235,7 +211,6 @@ export async function getVersionPrBody({
 
 export async function runVersion({
   script,
-  githubToken,
   cwd = process.cwd(),
   prTitle = "Version Packages",
   commitMessage = "Version Packages",
@@ -293,7 +268,7 @@ export async function runVersion({
 
   const finalPrTitle = `${prTitle}${!!preState ? ` (${preState.tag})` : ""}`;
 
-  // project with `commit: true` setting could have already committed files
+  // Project with `commit: true` setting could have already committed files
   if (!(await gitUtils.checkIfClean())) {
     const finalCommitMessage = `${commitMessage}${
       !!preState ? ` (${preState.tag})` : ""
@@ -311,10 +286,6 @@ export async function runVersion({
     .sort(sortTheThings);
   console.info(changedPackagesInfo);
 
-  return {
-    pullRequestNumber: 0,
-  };
-/*
   let prBody = await getVersionPrBody({
     hasPublishScript,
     preState,
@@ -322,7 +293,12 @@ export async function runVersion({
     changedPackagesInfo,
     prBodyMaxCharacters,
   });
+  console.info(prBody);
 
+  return {
+    pullRequestNumber: 0,
+  };
+/*
   if (searchResult.data.items.length === 0) {
     core.info("creating pull request");
     const { data: newPullRequest } = await octokit.rest.pulls.create({

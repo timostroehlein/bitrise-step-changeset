@@ -1,5 +1,7 @@
+#!/usr/bin/env zx
 import { readPreState } from "@changesets/pre";
 import readChangesets from "@changesets/read";
+// @ts-check
 
 /**
  * 

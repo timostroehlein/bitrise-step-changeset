@@ -1,3 +1,4 @@
+#!/usr/bin/env zx
 import { $ } from 'zx';
 // @ts-check
 

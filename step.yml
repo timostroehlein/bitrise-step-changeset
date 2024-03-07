@@ -67,17 +67,37 @@ toolkit:
 
 
 inputs:
-  - example_step_input: Default Value - you can leave this empty if you want to
+  # Version inputs
+  - run_version: "false"
     opts:
-      title: "Example Step Input"
-      summary: Summary. No more than 2-3 sentences.
-      description: |
-        Description of this input.
-
-        Can be Markdown formatted text.
-      is_expand: true
+      title: Run changeset version
+      summary: Whether to run changeset version
       is_required: true
-      value_options: []
+      value_options: ["true", "false"]
+      category: Version
+  - version_script: "yarn changeset version"
+    opts:
+      title: Script
+      summary: Version script to run
+      category: Version
+  - version_commit_message: "changeset version"
+    opts:
+      title: Commit message
+      summary: Version commit message for the changed files
+      category: Version
+  # Publish inputs
+  - run_publish: "false"
+    opts:
+      title: Run changeset publish
+      summary: Whether to run changeset publish
+      is_required: true
+      value_options: ["true", "false"]
+      category: Publish
+  - version_script: "yarn changeset publish"
+    opts:
+      title: Script
+      summary: Publish script to run
+      category: Publish
 
 outputs:
   - EXAMPLE_STEP_OUTPUT:
