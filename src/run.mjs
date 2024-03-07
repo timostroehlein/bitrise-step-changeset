@@ -303,12 +303,17 @@ export async function runVersion({
 
   await gitUtils.push(versionBranch, { force: true });
 
-  let searchResult = await searchResultPromise;
-  core.info(JSON.stringify(searchResult.data, null, 2));
+  // let searchResult = await searchResultPromise;
+  // core.info(JSON.stringify(searchResult.data, null, 2));
 
   const changedPackagesInfo = (await changedPackagesInfoPromises)
     .filter((x) => x)
     .sort(sortTheThings);
+  console.info(changedPackagesInfo);
+
+  return {
+    pullRequestNumber: 0,
+  };
 /*
   let prBody = await getVersionPrBody({
     hasPublishScript,

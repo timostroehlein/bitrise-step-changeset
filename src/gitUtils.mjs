@@ -23,7 +23,7 @@ export const push = async (
   branch,
   { force } = {}
 ) => {
-  await $`git push origin HEAD:${branch} ${force ? '--force' : ''}}`;
+  await $`git push origin ${branch} ${force ? '--force' : ''}`;
 };
 
 export const pushTags = async () => {
