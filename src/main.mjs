@@ -4,7 +4,7 @@
  * https://github.com/changesets/action
  * Packages need to be imported at the beginning, otherwise they won't get installed.
  */
-import "zx/globals";
+import "zx";
 import "semver";
 import "unified";
 import "resolve-from";

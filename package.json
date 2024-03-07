@@ -4,7 +4,10 @@
   "private": true,
   "workspaces": {
     "packages": [
-      "packages/*"
+      "_packages/*"
     ]
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.1"
   }
 }

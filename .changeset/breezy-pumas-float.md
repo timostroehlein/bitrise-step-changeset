@@ -1,5 +1,5 @@
 ---
-'@test/package': minor
+'test-package': minor
 ---
 
 Test changeset

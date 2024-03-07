@@ -70,9 +70,8 @@ export async function runPublish({
   createGithubReleases,
   cwd = process.cwd(),
 }) {
-  const octokit = setupOctokit(githubToken);
-
   let [publishCommand, ...publishArgs] = script.split(/\s+/);
+  return;
 
   let changesetPublishOutput = await getExecOutput(
     publishCommand,
@@ -253,21 +252,21 @@ export async function runVersion({
   let { preState } = await readChangesetState(cwd);
 
   await gitUtils.switchToMaybeExistingBranch(versionBranch);
-  await gitUtils.reset(github.context.sha);
+  // await gitUtils.reset(github.context.sha); // TODO: change
 
   let versionsByDirectory = await getVersionsByDirectory(cwd);
 
   if (script) {
     let [versionCommand, ...versionArgs] = script.split(/\s+/);
-    await exec(versionCommand, versionArgs, { cwd });
+    cd(cwd);
+    await $`${versionCommand} ${versionArgs}`; // TODO: cwd?
   } else {
     let changesetsCliPkgJson = requireChangesetsCliPkgJson(cwd);
     let cmd = semver.lt(changesetsCliPkgJson.version, "2.0.0")
       ? "bump"
       : "version";
-    await exec("node", [resolveFrom(cwd, "@changesets/cli/bin.js"), cmd], {
-      cwd,
-    });
+    cd(cwd);
+    await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} ${cmd}`; // TODO: cwd?
   }
 
   // let searchQuery = `repo:${repo}+state:open+head:${versionBranch}+base:${branch}+is:pull-request`;

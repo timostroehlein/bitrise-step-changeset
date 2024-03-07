@@ -1,4 +1,4 @@
-import { $ } from 'zx'
+import { $ } from 'zx';
 // @ts-check
 
 export const setupUser = async () => {
