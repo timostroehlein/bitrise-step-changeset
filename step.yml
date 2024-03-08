@@ -113,7 +113,7 @@ inputs:
       title: Script
       summary: Custom version script to run, by default changeset version is run
       category: Version
-  - version_branch: "release/changeset"
+  - version_branch: "release/changeset-version"
     opts:
       title: Branch
       summary: Release branch to commit changes to
