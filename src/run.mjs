@@ -215,7 +215,15 @@ export async function runVersion({
 
     // Create a changeset for align-deps if the min bump level version is exceeded
     const highestLevel = Math.max(changedPackagesInfo.map(info => info.highestLevel));
-    if (highestLevel >= BumpLevels[alignDepsMinBumpLevel]) {
+    aligndeps: if (highestLevel >= BumpLevels[alignDepsMinBumpLevel]) {
+      if (alignDepsPackageName === "") {
+        echo("Cannot create align deps without package name");
+        break aligndeps;
+      }
+      if (!changedPackages.some(pkg => pkg.packageJson.name === alignDepsPackageName)) {
+        echo(`Cannot find package ${alignDepsPackageName} in repo`);
+        break aligndeps;
+      }
       const changeset = {
         summary: '',
         releases: [
