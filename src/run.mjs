@@ -211,8 +211,8 @@ export async function runVersion({
       return {
         highestLevel: entry.highestLevel,
         private: !!pkg.packageJson.private,
-        content: entry.content.replaceAll("@", "&#64;"),
-        header: `## [${pkg.packageJson.name}@${pkg.packageJson.version}](${path.join(pkg.relativeDir, "CHANGELOG.md")})`.replaceAll("@", "&#64;"),
+        content: entry.content.replaceAll("@", "&commat;"),
+        header: `## [${pkg.packageJson.name}@${pkg.packageJson.version}](${path.join(pkg.relativeDir, "CHANGELOG.md")})`.replaceAll("@", "&commat;"),
       };
     })
   );
