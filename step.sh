@@ -20,7 +20,7 @@ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash 
 
 {
   nvm use 18 || nvm install 18
-  npm i -g zx@dev
+  npm i -g zx@7.2.0
 } > /dev/null
 
 echo -e "\nDone\n\n"

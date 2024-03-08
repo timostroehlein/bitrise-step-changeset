@@ -8,56 +8,59 @@ import {
   sortTheThings,
   getVersionsByDirectory,
 } from "./utils.mjs";
-import { pushTags } from "./gitUtils.mjs";
+import {
+  pushTags,
+  switchToMaybeExistingBranch,
+  reset
+} from "./gitUtils.mjs";
 import { readChangesetState } from "./readChangesetState.mjs";
 // @ts-check
 
-// Bitbucket pull request description limit
-// TODO: move to step input
 const MAX_CHARACTERS_PER_MESSAGE = 32768;
 
 /**
  * 
- * @param {{ pkg: any; tagName: string }} param1 
+ * @param {Object} param0
+ * @param {string} param0.cwd
+ * @param {string} param0.script
+ * @param {string} param0.branchDest
+ * @param {string} param0.description
  */
-const createRelease = async (
-  { pkg, tagName }
-) => {
-  try {
-    let changelogFileName = path.join(pkg.dir, "CHANGELOG.md");
-
-    let changelog = await fs.readFile(changelogFileName, "utf8");
-
-    let changelogEntry = getChangelogEntry(changelog, pkg.packageJson.version);
-    if (!changelogEntry) {
-      // we can find a changelog but not the entry for this version
-      // if this is true, something has probably gone wrong
-      throw new Error(
-        `Could not find changelog entry for ${pkg.packageJson.name}@${pkg.packageJson.version}`
-      );
-    }
-
-    // TODO: change
-    /*
-    await octokit.rest.repos.createRelease({
-      name: tagName,
-      tag_name: tagName,
-      body: changelogEntry.content,
-      prerelease: pkg.packageJson.version.includes("-"),
-      ...github.context.repo,
-    }); */
-  } catch (err) {
-    // if we can't find a changelog, the user has probably disabled changelogs
-    if (
-      err &&
-      typeof err === "object" &&
-      "code" in err &&
-      err.code !== "ENOENT"
-    ) {
-      throw err;
-    }
+export async function runStatus({
+  cwd = process.cwd(),
+  script,
+  branchDest,
+  descriptionExists,
+  descriptionMissing,
+}) {
+  // Run status script or changeset status
+  cd(cwd);
+  if (script) {
+    await $`${script}`;
+  } else {
+    await fs.ensureDir(`${cwd}/out`);
+    const output = await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} status ${branchDest !== "" ? `--since=${branchDest}` : ""} --output=out/changeset.json`;
+    echo(output);
   }
-};
+
+  // Read changeset.json and create description
+  const { releases } = await fs.readJson(`${cwd}/out/changeset.json`);
+  let fullDescription = "";
+  if (releases.length > 0) {
+    fullDescription = [
+      descriptionExists,
+      `\nThis PR includes changesets to release ${releases.length} package${releases.length > 1 ? 's' : ''})`,
+      "```",
+      "\n|Name|Type|Old Version|New Version|",
+      "|----|----|-----------|-----------|",
+      ...releases.map((release) => `|${release.name}|${release.type}|${release.oldVersion}|${release.newVersion}|`),
+      "```",
+    ].join("\n");
+  } else {
+    fullDescription = descriptionMissing;
+  }
+  return fullDescription;
+}
 
 /**
  * 
@@ -65,12 +68,16 @@ const createRelease = async (
  * @returns 
  */
 export async function runPublish({
-  script,
   cwd = process.cwd(),
+  script,
 }) {
-  // Run publish script
+  // Run publish script or changeset status
   cd(cwd);
-  await $`${script}`;
+  if (script) {
+    await $`${script}`;
+  } else {
+    await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} publish`;
+  }
   
   // Push git tags
   await pushTags();
@@ -160,7 +167,7 @@ export async function getVersionPrBody({
   prBodyMaxCharacters,
   branch,
 }) {
-  let messageHeader = `This PR was opened by the [Changesets release](https://github.com/changesets/action) GitHub action. When you're ready to do a release, you can merge this and ${
+  let messageHeader = `This PR was opened by the [Changeset](https://github.com/timostroehlein/bitrise-step-changeset) Bitrise step. When you're ready to do a release, you can merge this and ${
     hasPublishScript
       ? `the packages will be published to npm automatically`
       : `publish to npm yourself or [setup this action to publish automatically](https://github.com/changesets/action#with-publishing)`
@@ -209,47 +216,53 @@ export async function getVersionPrBody({
   return fullMessage;
 }
 
+/**
+ * 
+ * @param {Object} param0 
+ * @param {string} param0.cwd
+ * @param {string} param0.script
+ * @param {string} param0.branch
+ * @param {string} param0.commit
+ * @param {string} param0.prTitle
+ * @param {string} param0.commitMessage
+ * @param {boolean} param0.hasPublishScript
+ * @param {string} param0.prBodyMaxCharacters
+ * @returns 
+ */
 export async function runVersion({
-  script,
   cwd = process.cwd(),
+  script,
+  branch,
+  commit,
   prTitle = "Version Packages",
   commitMessage = "Version Packages",
   hasPublishScript = false,
   prBodyMaxCharacters = MAX_CHARACTERS_PER_MESSAGE,
 }) {
-  // const octokit = setupOctokit(githubToken);
-
-  // let repo = `${github.context.repo.owner}/${github.context.repo.repo}`;
-  // let branch = github.context.ref.replace("refs/heads/", "");
-  let branch = 'changeset-test'; // TODO: change
-  let versionBranch = `release/${branch}`;
-
   let { preState } = await readChangesetState(cwd);
 
-  await gitUtils.switchToMaybeExistingBranch(versionBranch);
-  // await gitUtils.reset(github.context.sha); // TODO: change
+  // Switch to branch and reset it to the latest commit
+  await switchToMaybeExistingBranch(branch);
+  await reset(commit);
 
   let versionsByDirectory = await getVersionsByDirectory(cwd);
 
+  // Run version script or changeset version
   if (script) {
-    let [versionCommand, ...versionArgs] = script.split(/\s+/);
     cd(cwd);
-    await $`${versionCommand} ${versionArgs}`; // TODO: cwd?
+    await $`${script}`;
   } else {
     let changesetsCliPkgJson = requireChangesetsCliPkgJson(cwd);
     let cmd = semver.lt(changesetsCliPkgJson.version, "2.0.0")
       ? "bump"
       : "version";
     cd(cwd);
-    await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} ${cmd}`; // TODO: cwd?
+    await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} ${cmd}`;
   }
 
-  // let searchQuery = `repo:${repo}+state:open+head:${versionBranch}+base:${branch}+is:pull-request`;
-  // let searchResultPromise = octokit.rest.search.issuesAndPullRequests({
-  //   q: searchQuery,
-  // });
+  // Get changelog of all packages
   let changedPackages = await getChangedPackages(cwd, versionsByDirectory);
-  let changedPackagesInfoPromises = Promise.all(
+  const changedPackagesInfoPromises = Promise.all(
     changedPackages.map(async (pkg) => {
       let changelogContents = await fs.readFile(
         path.join(pkg.dir, "CHANGELOG.md"),
@@ -265,8 +278,9 @@ export async function runVersion({
       };
     })
   );
-
-  const finalPrTitle = `${prTitle}${!!preState ? ` (${preState.tag})` : ""}`;
+  const changedPackagesInfo = (await changedPackagesInfoPromises)
+    .filter((x) => x)
+    .sort(sortTheThings);
 
   // Project with `commit: true` setting could have already committed files
   if (!(await gitUtils.checkIfClean())) {
@@ -276,55 +290,23 @@ export async function runVersion({
     await gitUtils.commitAll(finalCommitMessage);
   }
 
-  await gitUtils.push(versionBranch, { force: true });
+  // Push all changes
+  await gitUtils.push(branch, { force: true });
 
-  // let searchResult = await searchResultPromise;
-  // core.info(JSON.stringify(searchResult.data, null, 2));
-
-  const changedPackagesInfo = (await changedPackagesInfoPromises)
-    .filter((x) => x)
-    .sort(sortTheThings);
-  console.info(changedPackagesInfo);
-
-  let prBody = await getVersionPrBody({
+  // Create PR title and body
+  const finalPrTitle = `${prTitle}${!!preState ? ` (${preState.tag})` : ""}`;
+  const prBody = await getVersionPrBody({
     hasPublishScript,
     preState,
     branch,
     changedPackagesInfo,
     prBodyMaxCharacters,
   });
-  console.info(prBody);
+  echo(finalPrTitle);
+  echo(prBody);
 
   return {
-    pullRequestNumber: 0,
+    prTitle: finalPrTitle,
+    prBody,
   };
-/*
-  if (searchResult.data.items.length === 0) {
-    core.info("creating pull request");
-    const { data: newPullRequest } = await octokit.rest.pulls.create({
-      base: branch,
-      head: versionBranch,
-      title: finalPrTitle,
-      body: prBody,
-      ...github.context.repo,
-    });
-
-    return {
-      pullRequestNumber: newPullRequest.number,
-    };
-  } else {
-    const [pullRequest] = searchResult.data.items;
-
-    core.info(`updating found pull request #${pullRequest.number}`);
-    await octokit.rest.pulls.update({
-      pull_number: pullRequest.number,
-      title: finalPrTitle,
-      body: prBody,
-      ...github.context.repo,
-    });
-
-    return {
-      pullRequestNumber: pullRequest.number,
-    };
-  } */
 }

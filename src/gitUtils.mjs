@@ -39,7 +39,7 @@ export const switchToMaybeExistingBranch = async (branch) => {
   try {
     await $`git checkout ${branch}`;
   } catch (err) {
-    console.info(`Switching to a new branch ${branch}`)
+    echo(`Switching to a new branch ${branch}`)
     await $`git checkout -b ${branch}`;
   }
 };

@@ -12,7 +12,8 @@ title: |-
 summary: |
   Run changeset version and publish
 description: |
-  Run changeset version and publish
+  Run changeset version and publish.
+  This step doesn't automatically create PRs, instead it output all required information to create a PR in another step.
 website: https://github.com/timostroehlein/bitrise-step-changeset
 source_code_url: https://github.com/timostroehlein/bitrise-step-changeset
 support_url: https://github.com/timostroehlein/bitrise-step-changeset/issues
@@ -67,6 +68,33 @@ toolkit:
 
 
 inputs:
+  # Status inputs
+  - run_status: "false"
+    opts:
+      title: Run changeset status
+      summary: Whether to run changeset status
+      is_required: true
+      value_options: ["true", "false"]
+      category: Status
+  - status_script:
+    opts:
+      title: Script
+      summary: Status script to run
+      category: Status
+  - status_branch_dest:
+    opts:
+      title: Branch destination
+      summary: Branch destination to run status command against, usually origin/main
+  - status_exists_description:
+    opts:
+      title: Changeset exists description
+      summary: Changeset description used when a changeset has been found
+      category: Status
+  - status_missing_description:
+    opts:
+      title: Changeset missing description
+      summary: Changeset description used when a changeset is missing
+      category: Status
   # Version inputs
   - run_version: "false"
     opts:
@@ -75,15 +103,30 @@ inputs:
       is_required: true
       value_options: ["true", "false"]
       category: Version
-  - version_script: "yarn changeset version"
+  - version_script:
     opts:
       title: Script
       summary: Version script to run
+      category: Version
+  - version_branch: "release/changeset"
+    opts:
+      title: Branch
+      summary: Release branch to commit changes to
       category: Version
   - version_commit_message: "changeset version"
     opts:
       title: Commit message
       summary: Version commit message for the changed files
+      category: Version
+  - version_pr_title: "Changeset Version"
+    opts:
+      title: PR title
+      summary: Title of the PR
+      category: Version
+  - version_pr_body_max_length: 32768
+    opts:
+      title: PR body max length
+      summary: Maximum amount of characters allowed in the PR body
       category: Version
   # Publish inputs
   - run_publish: "false"
@@ -93,18 +136,34 @@ inputs:
       is_required: true
       value_options: ["true", "false"]
       category: Publish
-  - version_script: "yarn changeset publish"
+  - version_script:
     opts:
       title: Script
       summary: Publish script to run
       category: Publish
 
 outputs:
-  - EXAMPLE_STEP_OUTPUT:
+  - CHANGESET_EXISTS:
     opts:
-      title: "Example Step Output"
-      summary: Summary. No more than 2-3 sentences.
-      description: |
-        Description of this output.
-
-        Can be Markdown formatted text.
+      title: Changeset exists
+      summary: Whether any changeset exists
+  - CHANGESET_STATUS_DESCRIPTION:
+    opts:
+      title: Changeset stauts description
+      summary: Description of the changeset status
+  - CHANGESET_PUBLISHED:
+    opts:
+      title: Changeset published
+      summary: Whether the changeset has been published or not
+  - CHANGESET_PR_BRANCH:
+    opts:
+      title: PR branch
+      summary: Source branch to create the PR
+  - CHANGESET_PR_TITLE:
+    opts:
+      title: PR title
+      summary: Title which can be used to create a PR
+  - CHANGESET_PR_DESCRIPTION:
+    opts:
+      title: PR description
+      summary: Description which can be used to create a PR

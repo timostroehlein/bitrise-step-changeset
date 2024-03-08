@@ -17,77 +17,102 @@ import "@changesets/pre";
 import "@changesets/read";
 import "@manypkg/get-packages";
 import { findRoot } from "@manypkg/find-root";
-import { runPublish, runVersion } from "./run.mjs";
+import { runPublish, runStatus, runVersion } from "./run.mjs";
 import { readChangesetState } from "./readChangesetState.mjs";
+import { createNpmrc } from "./utils.mjs";
 // @ts-check
 
+// General
+const commitHash = process.env.BITRISE_GIT_COMMIT;
+// Status
+const shouldRunStatusScript = process.env.run_status === "true";
+const statusScript = process.env.status_script;
+const statusBranchDest = process.env.status_branch_dest;
+const statusExistsDescription = process.env.status_exists_description;
+const statusMissingDescription = process.env.status_missing_description;
 // Version
-const shouldRunVersionScript = process.env.run_version;
+const shouldRunVersionScript = process.env.run_version === "true";
 const versionScript = process.env.version_script;
+const versionBranch = process.env.version_branch;
 const versionCommitMessage = process.env.version_commit_message;
+const versionPrTitle = process.env.version_pr_title;
+const versionPrBodyMaxLength = process.env.version_pr_body_max_length
 // Publish
-const shouldRunPublishScript = process.env.run_publish;
+const shouldRunPublishScript = process.env.run_publish === "true";
 const publishScript = process.env.publish_script;
 
 // Check whether there are any changesets
 const { rootDir } = await findRoot(process.cwd());
-console.log(rootDir);
-let { changesets } = await readChangesetState(rootDir);
+const { changesets } = await readChangesetState(rootDir);
 
-let hasChangesets = changesets.length !== 0;
+const hasChangesets = changesets.length !== 0;
 const hasNonEmptyChangesets = changesets.some(
   (changeset) => changeset.releases.length > 0
 );
 
-// Add output env variable
+// Add output env variables
 await $`envman add --key CHANGESET_EXISTS --value "${hasChangesets}"`;
 await $`envman add --key CHANGESET_PUBLISHED --value "false"`;
 
-switch (false) {
+switch (true) {
+  // Changeset status
+  case !shouldRunStatusScript:
+    echo("Skipping status; disabled in step");
+    break;
+  case shouldRunStatusScript: {
+    echo("Changesets found, running changeset status");
+    const description = await runStatus({
+      cwd: rootDir,
+      script: statusScript,
+      branchDest: statusBranchDest,
+      descriptionExists: statusExistsDescription,
+      descriptionMissing: statusMissingDescription
+    });
+    await $`envman add --key CHANGESET_STATUS_DESCRIPTION --value=${description}`;
+    break;
+  }
+  // Changeset version
+  case hasChangesets && !shouldRunVersionScript:
+    echo("Skipping versioning; disabled in step");
+    break;
+  case hasChangesets && !hasNonEmptyChangesets:
+    echo("All changesets are empty; not creating PR");
+    break;
+  case hasChangesets && shouldRunVersionScript: {
+    echo("Changesets found, attempting to version packages");
+    const { prTitle, prBody } = await runVersion({
+      cwd: rootDir,
+      script: versionScript,
+      branch: versionBranch,
+      commit: commitHash,
+      prTitle: versionPrTitle,
+      commitMessage: versionCommitMessage,
+      hasPublishScript: shouldRunPublishScript,
+      prBodyMaxCharacters: versionPrBodyMaxLength,
+    });
+
+    // Add output env variables
+    await $`envman add --key CHANGESET_PR_BRANCH --value "${versionBranch}"`;
+    await $`envman add --key CHANGESET_PR_TITLE --value "${prTitle}"`;
+    await $`envman add --key CHANGESET_PR_DESCRIPTION --value "${prBody}"`;
+    break;
+  }
+  // Changeset
   case !hasChangesets && !shouldRunPublishScript:
-    console.info("No changesets found");
+    echo("No changesets found, skipping publishing; disabled in step");
     break;
   case !hasChangesets && shouldRunPublishScript: {
-    console.info(
+    echo(
       "No changesets found, attempting to publish any unpublished packages to npm"
     );
 
     // Create .npmrc in user directory if it doesn't exist
-    let userNpmrcPath = `${process.env.HOME}/.npmrc`;
-    if (fs.existsSync(userNpmrcPath)) {
-      console.info("Found existing user .npmrc file");
-      const userNpmrcContent = await fs.readFile(userNpmrcPath, "utf8");
-      const authLine = userNpmrcContent.split("\n").find((line) => {
-        // Check based on https://github.com/npm/cli/blob/8f8f71e4dd5ee66b3b17888faad5a7bf6c657eed/test/lib/adduser.js#L103-L105
-        return /^\s*\/\/registry\.npmjs\.org\/:[_-]authToken=/i.test(line);
-      });
-      if (authLine) {
-        console.info(
-          "Found existing auth token for the npm registry in the user .npmrc file"
-        );
-      } else {
-        console.info(
-          "Didn't find existing auth token for the npm registry in the user .npmrc file, creating one"
-        );
-        fs.appendFileSync(
-          userNpmrcPath,
-          `\n//registry.npmjs.org/:_authToken=${process.env.NPM_TOKEN}\n`
-        );
-      }
-    } else {
-      console.info("No user .npmrc file found, creating one");
-      fs.writeFileSync(
-        userNpmrcPath,
-        `//registry.npmjs.org/:_authToken=${process.env.NPM_TOKEN}\n`
-      );
-    }
+    await createNpmrc();
 
     // Publish changesets
     const result = await runPublish({
       cwd: rootDir,
       script: publishScript,
-      // githubToken: "",
-      // createGithubReleases: core.getBooleanInput("createGithubReleases"),
     });
 
     // Add output env variables
@@ -97,19 +122,7 @@ switch (false) {
     }
     break;
   }
-  case hasChangesets && !hasNonEmptyChangesets:
-    console.info("All changesets are empty; not creating PR");
-    break;
-  case hasChangesets && shouldRunVersionScript:
-    const { pullRequestNumber } = await runVersion({
-      cwd: rootDir,
-      script: versionScript,
-      // githubToken: "",
-      // prTitle: getOptionalInput("title"),
-      commitMessage: versionCommitMessage,
-      hasPublishScript: shouldRunPublishScript,
-    });
-
-    // core.setOutput("pullRequestNumber", String(pullRequestNumber));
+  default:
+    echo('default');
     break;
 }
