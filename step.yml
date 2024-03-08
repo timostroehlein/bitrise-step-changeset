@@ -78,6 +78,7 @@ inputs:
     opts:
       title: Branch destination
       summary: Destination branch of the PR, this is usually main
+      is_required: true
   # Status inputs
   - run_status: "false"
     opts:

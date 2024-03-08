@@ -43,8 +43,7 @@ export async function runStatus({
     await $.noquote`${script}`;
   } else {
     await fs.ensureDir(`${cwd}/out`);
-    const output = await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} status ${branchDest !== "" ? `--since=origin/${branchDest}` : ""} --output=out/changeset.json`;
-    echo(output);
+    await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} status ${branchDest !== "" ? `--since=origin/${branchDest}` : ""} --output=out/changeset.json`;
   }
 
   // Read changeset.json and create description
@@ -184,17 +183,22 @@ export async function runVersion({
   commitMessage = "Version Packages",
   prBodyMaxCharacters = MAX_CHARACTERS_PER_MESSAGE,
 }) {
-  let { preState } = await readChangesetState(cwd);
+  const { preState } = await readChangesetState(cwd);
 
   // Switch to branch and reset it to the latest commit
   await switchToMaybeExistingBranch(branch);
   await reset(commit);
 
+  // Check previous versions
   const previousVersions = await getVersionsByDirectory(cwd);
+  await fs.ensureDir(`${cwd}/out`);
+  await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} status --output=out/changeset.json`;
+  const { releases } = await fs.readJson(`${cwd}/out/changeset.json`);
+  const highestLevel = Math.max(...releases.map(release => BumpLevels[release.type]));
 
   // Run version script or changeset version
+  cd(cwd);
   const version = async () => {
-    cd(cwd);
     if (script) {
       await $.noquote`${script}`;
     } else {
@@ -216,7 +220,6 @@ export async function runVersion({
     await $.noquote`${alignDepsScript}`;
 
     // Create a changeset for align-deps if the min bump level version is exceeded
-    const highestLevel = Math.max(...changedPackagesInfo.map(info => info.highestLevel));
     aligndeps: if (highestLevel >= BumpLevels[alignDepsMinBumpLevel]) {
       if (alignDepsPackageName === "") {
         echo("Cannot create align deps without package name");
@@ -250,7 +253,7 @@ export async function runVersion({
 
   // Run install script
   if (installScript) {
-    await $.noquote`${alignDepsScript}`;
+    await $.noquote`${installScript}`;
   }
 
   // Project with `commit: true` setting could have already committed files

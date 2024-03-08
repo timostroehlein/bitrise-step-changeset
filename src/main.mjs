@@ -26,15 +26,15 @@ import { createNpmrc } from "./utils.mjs";
 // https://github.com/google/zx/issues/126#issuecomment-850621670
 $.noquote = async (...args) => { const q = $.quote; $.quote = v => v; const p = $(...args); await p; $.quote = q; return p };
 
-// General
+// General inputs
 const commitHash = process.env.commit_hash;
 const branchDest = process.env.branch_dest;
-// Status
+// Status inputs
 const shouldRunStatusScript = process.env.run_status === "true";
 const statusScript = process.env.status_script;
 const statusExistsDescription = process.env.status_exists_description;
 const statusMissingDescription = process.env.status_missing_description;
-// Version
+// Version inputs
 const shouldRunVersionScript = process.env.run_version === "true";
 const versionScript = process.env.version_script;
 const installScript = process.env.install_script;
@@ -46,7 +46,7 @@ const versionCommitMessage = process.env.version_commit_message;
 const versionPrTitle = process.env.version_pr_title;
 const versionPrDescription = process.env.version_pr_description;
 const versionPrBodyMaxLength = process.env.version_pr_body_max_length;
-// Publish
+// Publish inputs
 const shouldRunPublishScript = process.env.run_publish === "true";
 const publishScript = process.env.publish_script;
 
