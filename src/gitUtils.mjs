@@ -82,5 +82,5 @@ export const checkIfClean = async () => {
  * @param {string} branch 
  */
 export const fetchBranch = async (branch) => {
-  await $`git fetch origin ${branch}`;
+  await $`git fetch --no-tags --depth=5 origin ${branch}`;
 };
