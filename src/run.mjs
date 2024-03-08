@@ -15,7 +15,8 @@ import {
   reset,
   checkIfClean,
   commitAll,
-  push
+  push,
+  fetchBranch
 } from "./gitUtils.mjs";
 import { readChangesetState } from "./changesetUtils.mjs";
 // @ts-check
@@ -191,6 +192,7 @@ export async function runVersion({
 
   // Check previous versions
   const previousVersions = await getVersionsByDirectory(cwd);
+  await fetchBranch(branchDest);
   await fs.ensureDir(`${cwd}/out`);
   await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} status --output=out/changeset.json`;
   const { releases } = await fs.readJson(`${cwd}/out/changeset.json`);

@@ -76,3 +76,11 @@ export const checkIfClean = async () => {
   const output = await $`git status --porcelain`;
   return output.stdout === "";
 };
+
+/**
+ * 
+ * @param {string} branch 
+ */
+export const fetchBranch = async (branch) => {
+  await $`git fetch origin ${branch}`;
+};
