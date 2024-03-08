@@ -42,7 +42,7 @@ export async function runStatus({
     await $.noquote`${script}`
   } else {
     await fs.ensureDir(`${cwd}/out`);
-    const output = await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} status ${branchDest !== "" ? `--since=${branchDest}` : ""} --output=out/changeset.json`;
+    const output = await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} status ${branchDest !== "" ? `--since=origin/${branchDest}` : ""} --output=out/changeset.json`;
     echo(output);
   }
 

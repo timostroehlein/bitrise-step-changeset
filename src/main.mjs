@@ -60,7 +60,7 @@ await $`envman add --key CHANGESET_PUBLISHED --value="false"`;
 
 // Changeset status
 if (shouldRunStatusScript) {
-  echo("Changesets found, running changeset status");
+  echo("Running changeset status");
   const description = await runStatus({
     cwd: rootDir,
     script: statusScript,
