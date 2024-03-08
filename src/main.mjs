@@ -18,7 +18,7 @@ import "@changesets/read";
 import "@manypkg/get-packages";
 import { findRoot } from "@manypkg/find-root";
 import { runPublish, runStatus, runVersion } from "./run.mjs";
-import { readChangesetState } from "./readChangesetState.mjs";
+import { readChangesetState } from "./changesetUtils.mjs";
 import { createNpmrc } from "./utils.mjs";
 // @ts-check
 
@@ -36,6 +36,9 @@ const statusMissingDescription = process.env.status_missing_description;
 // Version
 const shouldRunVersionScript = process.env.run_version === "true";
 const versionScript = process.env.version_script;
+const alignDepsScript = process.env.align_deps_script;
+const alignDepsPackageName = process.env.align_deps_package_name;
+const alignDepsMinBumpLevel = process.env.align_deps_min_bump_level;
 const versionBranch = process.env.version_branch;
 const versionCommitMessage = process.env.version_commit_message;
 const versionPrTitle = process.env.version_pr_title;
@@ -87,6 +90,9 @@ version: if (shouldRunVersionScript) {
   const { prTitle, prBody } = await runVersion({
     cwd: rootDir,
     script: versionScript,
+    alignDepsScript,
+    alignDepsPackageName,
+    alignDepsMinBumpLevel,
     branch: versionBranch,
     branchDest,
     commit: commitHash,

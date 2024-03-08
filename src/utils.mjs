@@ -160,3 +160,30 @@ export async function createNpmrc() {
     );
   }
 }
+
+/**
+ * 
+ * @param {any[]} changedPackages 
+ * @returns 
+ */
+export async function getChangedPackagesInfo(changedPackages) {
+  const changedPackagesInfoPromises = Promise.all(
+    changedPackages.map(async (pkg) => {
+      const changelogContents = await fs.readFile(
+        path.join(pkg.dir, "CHANGELOG.md"),
+        "utf8"
+      );
+
+      const entry = getChangelogEntry(changelogContents, pkg.packageJson.version);
+      return {
+        highestLevel: entry.highestLevel,
+        private: !!pkg.packageJson.private,
+        content: entry.content.replaceAll("@", "&commat;"),
+        header: `## [${pkg.packageJson.name}@${pkg.packageJson.version}](${path.join(pkg.relativeDir, "CHANGELOG.md")})`.replaceAll("@", "&commat;"),
+      };
+    })
+  );
+  return (await changedPackagesInfoPromises)
+    .filter((x) => x)
+    .sort(sortTheThings);
+}

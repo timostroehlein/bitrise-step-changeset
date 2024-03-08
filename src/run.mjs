@@ -3,10 +3,10 @@ import { getPackages } from "@manypkg/get-packages";
 import semver from "semver";
 import resolveFrom from "resolve-from";
 import {
-  getChangelogEntry,
   getChangedPackages,
-  sortTheThings,
   getVersionsByDirectory,
+  getChangedPackagesInfo,
+  BumpLevels,
 } from "./utils.mjs";
 import {
   pushTags,
@@ -16,7 +16,7 @@ import {
   commitAll,
   push
 } from "./gitUtils.mjs";
-import { readChangesetState } from "./readChangesetState.mjs";
+import { readChangesetState } from "./changesetUtils.mjs";
 // @ts-check
 
 const MAX_CHARACTERS_PER_MESSAGE = 32768;
@@ -39,7 +39,7 @@ export async function runStatus({
   // Run status script or changeset status
   cd(cwd);
   if (script) {
-    await $.noquote`${script}`
+    await $.noquote`${script}`;
   } else {
     await fs.ensureDir(`${cwd}/out`);
     const output = await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} status ${branchDest !== "" ? `--since=origin/${branchDest}` : ""} --output=out/changeset.json`;
@@ -158,6 +158,7 @@ If you're not ready to do a release yet, that's fine, whenever you add more chan
  * @param {Object} param0 
  * @param {string} param0.cwd
  * @param {string} param0.script
+ * @param {string} param0.alignDepsScript
  * @param {string} param0.branch
  * @param {string} param0.branchDest
  * @param {string} param0.commit
@@ -170,6 +171,9 @@ If you're not ready to do a release yet, that's fine, whenever you add more chan
 export async function runVersion({
   cwd = process.cwd(),
   script,
+  alignDepsScript,
+  alignDepsPackageName,
+  alignDepsMinBumpLevel,
   branch,
   branchDest,
   commit,
@@ -184,41 +188,53 @@ export async function runVersion({
   await switchToMaybeExistingBranch(branch);
   await reset(commit);
 
-  let versionsByDirectory = await getVersionsByDirectory(cwd);
+  const previousVersions = await getVersionsByDirectory(cwd);
 
   // Run version script or changeset version
-  cd(cwd);
-  if (script) {
-    await $.noquote`${script}`
-  } else {
-    let changesetsCliPkgJson = requireChangesetsCliPkgJson(cwd);
-    let cmd = semver.lt(changesetsCliPkgJson.version, "2.0.0")
-      ? "bump"
-      : "version";
-    await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} ${cmd}`;
+  const version = async () => {
+    cd(cwd);
+    if (script) {
+      await $.noquote`${script}`;
+    } else {
+      let changesetsCliPkgJson = requireChangesetsCliPkgJson(cwd);
+      let cmd = semver.lt(changesetsCliPkgJson.version, "2.0.0")
+        ? "bump"
+        : "version";
+      await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} ${cmd}`;
+    }
   }
+  await version();
 
-  // Get changelog of all packages
-  const changedPackages = await getChangedPackages(cwd, versionsByDirectory);
-  const changedPackagesInfoPromises = Promise.all(
-    changedPackages.map(async (pkg) => {
-      const changelogContents = await fs.readFile(
-        path.join(pkg.dir, "CHANGELOG.md"),
-        "utf8"
-      );
+  // Get changes of all packages
+  let changedPackages = await getChangedPackages(cwd, previousVersions);
+  let changedPackagesInfo = await getChangedPackagesInfo(changedPackages);
 
-      const entry = getChangelogEntry(changelogContents, pkg.packageJson.version);
-      return {
-        highestLevel: entry.highestLevel,
-        private: !!pkg.packageJson.private,
-        content: entry.content.replaceAll("@", "&commat;"),
-        header: `## [${pkg.packageJson.name}@${pkg.packageJson.version}](${path.join(pkg.relativeDir, "CHANGELOG.md")})`.replaceAll("@", "&commat;"),
+  // Run align-deps
+  if (alignDepsScript) {
+    await $.noquote`${alignDepsScript}`;
+
+    // Create a changeset for align-deps if the min bump level version is exceeded
+    const highestLevel = Math.max(changedPackagesInfo.map(info => info.highestLevel));
+    if (highestLevel >= BumpLevels[alignDepsMinBumpLevel]) {
+      const changeset = {
+        summary: '',
+        releases: [
+          {
+            name: alignDepsPackageName,
+            type: isMajorVersionIncrease ? 'minor' : 'patch',
+          },
+        ],
       };
-    })
-  );
-  const changedPackagesInfo = (await changedPackagesInfoPromises)
-    .filter((x) => x)
-    .sort(sortTheThings);
+      await writeChangeset(changeset, cwd);
+
+      // Run version script
+      await version();
+
+      // Get changes of all packages
+      changedPackages = await getChangedPackages(cwd, previousVersions);
+      changedPackagesInfo = await getChangedPackagesInfo(changedPackages);
+    }
+  }
 
   // Project with `commit: true` setting could have already committed files
   if (!(await checkIfClean())) {
@@ -261,7 +277,7 @@ export async function runPublish({
   // Run publish script or changeset status
   cd(cwd);
   if (script) {
-    await $.noquote`${script}`
+    await $.noquote`${script}`;
   } else {
     await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} publish`;
   }

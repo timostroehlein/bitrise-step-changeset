@@ -72,6 +72,7 @@ inputs:
   - commit_hash: $BITRISE_GIT_COMMIT
     opts:
       title: Commit hash
+      is_required: true
       is_dont_change_value: true
   - branch_dest: $BITRISEIO_GIT_BRANCH_DEST
     opts:
@@ -110,8 +111,29 @@ inputs:
       category: Version
   - version_script:
     opts:
-      title: Script
+      title: Version script
       summary: Custom version script to run, by default changeset version is run
+      category: Version
+  - install_script:
+    opts:
+      title: Install script
+      summary: Install script of a package manager to update the lock file
+      category: Version
+  - align_deps_script:
+    opts:
+      title: Align-deps script
+      summary: Align-deps script to generate a new preset and run rnx-align-deps (https://github.com/microsoft/rnx-kit/tree/main/packages/align-deps)
+      category: Version
+  - align_deps_package_name:
+    opts:
+      title: Align-deps package name
+      summary: Name of the align-deps package within the repo
+      category: Version
+  - align_deps_min_bump_level: "major"
+    opts:
+      title: Align-deps min bump level
+      summary: Minimum bump level that should trigger the creation of a new align-deps preset
+      value_options: ["dep", "patch", "minor", "major"]
       category: Version
   - version_branch: "release/changeset-version"
     opts:
