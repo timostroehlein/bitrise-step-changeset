@@ -54,75 +54,75 @@ const hasNonEmptyChangesets = changesets.some(
 await $`envman add --key CHANGESET_EXISTS --value "${hasChangesets}"`;
 await $`envman add --key CHANGESET_PUBLISHED --value "false"`;
 
-switch (true) {
-  // Changeset status
-  case !shouldRunStatusScript:
-    echo("Skipping status; disabled in step");
-    break;
-  case shouldRunStatusScript: {
-    echo("Changesets found, running changeset status");
-    const description = await runStatus({
-      cwd: rootDir,
-      script: statusScript,
-      branchDest: statusBranchDest,
-      descriptionExists: statusExistsDescription,
-      descriptionMissing: statusMissingDescription
-    });
-    await $`envman add --key CHANGESET_STATUS_DESCRIPTION --value=${description}`;
-    break;
+// Changeset status
+if (shouldRunStatusScript) {
+  echo("Changesets found, running changeset status");
+  const description = await runStatus({
+    cwd: rootDir,
+    script: statusScript,
+    branchDest: statusBranchDest,
+    descriptionExists: statusExistsDescription,
+    descriptionMissing: statusMissingDescription
+  });
+  await $`envman add --key CHANGESET_STATUS_DESCRIPTION --value=${description}`;
+} else {
+  echo("Changeset status disabled");
+}
+
+// Changeset version
+version: if (shouldRunVersionScript) {
+  if (!hasChangesets) {
+    echo("No changesets found, skipping changeset version");
+    break version;
   }
-  // Changeset version
-  case hasChangesets && !shouldRunVersionScript:
-    echo("Skipping versioning; disabled in step");
-    break;
-  case hasChangesets && !hasNonEmptyChangesets:
-    echo("All changesets are empty; not creating PR");
-    break;
-  case hasChangesets && shouldRunVersionScript: {
-    echo("Changesets found, attempting to version packages");
-    const { prTitle, prBody } = await runVersion({
-      cwd: rootDir,
-      script: versionScript,
-      branch: versionBranch,
-      commit: commitHash,
-      prTitle: versionPrTitle,
-      commitMessage: versionCommitMessage,
-      hasPublishScript: shouldRunPublishScript,
-      prBodyMaxCharacters: versionPrBodyMaxLength,
-    });
-
-    // Add output env variables
-    await $`envman add --key CHANGESET_PR_BRANCH --value "${versionBranch}"`;
-    await $`envman add --key CHANGESET_PR_TITLE --value "${prTitle}"`;
-    await $`envman add --key CHANGESET_PR_DESCRIPTION --value "${prBody}"`;
-    break;
+  if (!hasNonEmptyChangesets) {
+    echo("All changesets are empty, skipping changeset version");
+    break version;
   }
-  // Changeset
-  case !hasChangesets && !shouldRunPublishScript:
-    echo("No changesets found, skipping publishing; disabled in step");
-    break;
-  case !hasChangesets && shouldRunPublishScript: {
-    echo(
-      "No changesets found, attempting to publish any unpublished packages to npm"
-    );
+  echo("Changesets found, attempting to version packages");
+  const { prTitle, prBody } = await runVersion({
+    cwd: rootDir,
+    script: versionScript,
+    branch: versionBranch,
+    commit: commitHash,
+    prTitle: versionPrTitle,
+    commitMessage: versionCommitMessage,
+    hasPublishScript: shouldRunPublishScript,
+    prBodyMaxCharacters: Number(versionPrBodyMaxLength),
+  });
 
-    // Create .npmrc in user directory if it doesn't exist
-    await createNpmrc();
+  // Add output env variables
+  await $`envman add --key CHANGESET_PR_BRANCH --value "${versionBranch}"`;
+  await $`envman add --key CHANGESET_PR_TITLE --value "${prTitle}"`;
+  await $`envman add --key CHANGESET_PR_DESCRIPTION --value "${prBody}"`;
+} else {
+  echo("Changeset version disabled");
+}
 
-    // Publish changesets
-    const result = await runPublish({
-      cwd: rootDir,
-      script: publishScript,
-    });
-
-    // Add output env variables
-    if (result.published) {
-      await $`envman add --key CHANGESET_PUBLISHED --value "true"`;
-      await $`envman add --key CHANGESET_PUBLISHED_PACKAGES --value "${JSON.stringify(result.publishedPackages)}"`;
-    }
-    break;
+// Changeset publish
+publish: if (shouldRunPublishScript) {
+  if (hasChangesets) {
+    echo("Changesets found, skipping publish, make sure to run changeset version first");
+    break publish;
   }
-  default:
-    echo('default');
-    break;
+  echo(
+    "No changesets found, attempting to publish any unpublished packages to npm"
+  );
+
+  // Create .npmrc in user directory if it doesn't exist
+  await createNpmrc();
+
+  // Publish changesets
+  const result = await runPublish({
+    cwd: rootDir,
+    script: publishScript,
+  });
+
+  // Add output env variables
+  if (result.published) {
+    await $`envman add --key CHANGESET_PUBLISHED --value "true"`;
+    await $`envman add --key CHANGESET_PUBLISHED_PACKAGES --value "${JSON.stringify(result.publishedPackages)}"`;
+  }
+} else {
+  echo("Changeset publish disabled");
 }
