@@ -70,6 +70,6 @@ export const commitAll = async (message) => {
  * @returns {Promise<boolean>}
  */
 export const checkIfClean = async () => {
-  const output = await $`git status --porcelain`; // TODO: check
-  return !output.length;
+  const output = await $`git status --porcelain`;
+  return output.stdout === "";
 };

@@ -7,8 +7,6 @@ set -e
 # debug log
 # set -x
 
-echo "This is the value specified for the input 'example_step_input': ${example_step_input}"
-
 echo -e "Setting up NVM and ZX...\n\n"
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash > /dev/null
 
