@@ -52,12 +52,10 @@ export async function runStatus({
   if (releases.length > 0) {
     fullDescription = [
       descriptionExists,
-      `\nThis PR includes changesets to release ${releases.length} package${releases.length > 1 ? 's' : ''})`,
-      "```",
+      `\nThis PR includes changesets for ${releases.length} package${releases.length !== 1 ? 's' : ''}.`,
       "\n|Name|Type|Old Version|New Version|",
       "|----|----|-----------|-----------|",
       ...releases.map((release) => `|${release.name}|${release.type}|${release.oldVersion}|${release.newVersion}|`),
-      "```",
     ].join("\n");
   } else {
     fullDescription = descriptionMissing;
