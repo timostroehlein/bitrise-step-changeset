@@ -202,17 +202,17 @@ export async function runVersion({
   const changedPackages = await getChangedPackages(cwd, versionsByDirectory);
   const changedPackagesInfoPromises = Promise.all(
     changedPackages.map(async (pkg) => {
-      let changelogContents = await fs.readFile(
+      const changelogContents = await fs.readFile(
         path.join(pkg.dir, "CHANGELOG.md"),
         "utf8"
       );
 
-      let entry = getChangelogEntry(changelogContents, pkg.packageJson.version);
+      const entry = getChangelogEntry(changelogContents, pkg.packageJson.version);
       return {
         highestLevel: entry.highestLevel,
         private: !!pkg.packageJson.private,
-        content: entry.content,
-        header: `## ${pkg.packageJson.name}@${pkg.packageJson.version}`,
+        content: entry.content.replace("@", "&#64;"),
+        header: `## [${pkg.packageJson.name}@${pkg.packageJson.version}](${path.join(pkg.relativeDir, "CHANGELOG.md")})`.replace("@", "&#64;"),
       };
     })
   );
