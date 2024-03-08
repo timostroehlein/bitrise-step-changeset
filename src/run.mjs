@@ -1,5 +1,6 @@
 #!/usr/bin/env zx
 import { getPackages } from "@manypkg/get-packages";
+import writeChangesets from "@changesets/write";
 import semver from "semver";
 import resolveFrom from "resolve-from";
 import {
@@ -233,7 +234,7 @@ export async function runVersion({
           },
         ],
       };
-      await writeChangeset(changeset, cwd);
+      await writeChangesets(changeset, cwd);
 
       // Run version script
       await version();

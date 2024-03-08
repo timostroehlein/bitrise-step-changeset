@@ -15,6 +15,7 @@ import "remark-stringify";
 import "mdast-util-to-string";
 import "@changesets/pre";
 import "@changesets/read";
+import "@changesets/write";
 import "@manypkg/get-packages";
 import { findRoot } from "@manypkg/find-root";
 import { runPublish, runStatus, runVersion } from "./run.mjs";
