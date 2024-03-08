@@ -4,7 +4,7 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 app:
   envs:
   # Secret params are defined in .bitrise.secrets.yml
-  - A_SECRET_PARAM: $A_SECRET_PARAM
+  - BITRISE_GIT_COMMIT: $BITRISE_GIT_COMMIT
   # Params
   - BITRISEIO_GIT_BRANCH_DEST: main
   # If you want to share this step into a StepLib

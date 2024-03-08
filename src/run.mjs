@@ -248,15 +248,14 @@ export async function runVersion({
   let versionsByDirectory = await getVersionsByDirectory(cwd);
 
   // Run version script or changeset version
+  cd(cwd);
   if (script) {
-    cd(cwd);
     await $`${script}`;
   } else {
     let changesetsCliPkgJson = requireChangesetsCliPkgJson(cwd);
     let cmd = semver.lt(changesetsCliPkgJson.version, "2.0.0")
       ? "bump"
       : "version";
-    cd(cwd);
     await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} ${cmd}`;
   }
 
