@@ -39,7 +39,7 @@ export async function runStatus({
   // Run status script or changeset status
   cd(cwd);
   if (script) {
-    await $`${script}`;
+    await $.noquote`${script}`
   } else {
     await fs.ensureDir(`${cwd}/out`);
     const output = await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} status ${branchDest !== "" ? `--since=${branchDest}` : ""} --output=out/changeset.json`;
@@ -63,81 +63,6 @@ export async function runStatus({
     fullDescription = descriptionMissing;
   }
   return fullDescription;
-}
-
-/**
- * 
- * @param {*} param0 
- * @returns 
- */
-export async function runPublish({
-  cwd = process.cwd(),
-  script,
-}) {
-  // Run publish script or changeset status
-  cd(cwd);
-  if (script) {
-    await $`${script}`;
-  } else {
-    await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} publish`;
-  }
-  
-  // Push git tags
-  await pushTags();
-
-  let { packages, tool } = await getPackages(cwd);
-  let releasedPackages = [];
-
-  if (tool !== "root") {
-    let newTagRegex = /New tag:\s+(@[^/]+\/[^@]+|[^/]+)@([^\s]+)/;
-    let packagesByName = new Map(packages.map((x) => [x.packageJson.name, x]));
-
-    for (let line of changesetPublishOutput.stdout.split("\n")) {
-      let match = line.match(newTagRegex);
-      if (match === null) {
-        continue;
-      }
-      let pkgName = match[1];
-      let pkg = packagesByName.get(pkgName);
-      if (pkg === undefined) {
-        throw new Error(
-          `Package "${pkgName}" not found.` +
-            "This is probably a bug in the action, please open an issue"
-        );
-      }
-      releasedPackages.push(pkg);
-    }
-  } else {
-    if (packages.length === 0) {
-      throw new Error(
-        `No package found.` +
-          "This is probably a bug in the action, please open an issue"
-      );
-    }
-    let pkg = packages[0];
-    let newTagRegex = /New tag:/;
-
-    for (let line of changesetPublishOutput.stdout.split("\n")) {
-      let match = line.match(newTagRegex);
-
-      if (match) {
-        releasedPackages.push(pkg);
-        break;
-      }
-    }
-  }
-
-  if (releasedPackages.length) {
-    return {
-      published: true,
-      publishedPackages: releasedPackages.map((pkg) => ({
-        name: pkg.packageJson.name,
-        version: pkg.packageJson.version,
-      })),
-    };
-  }
-
-  return { published: false };
 }
 
 /**
@@ -253,7 +178,7 @@ export async function runVersion({
   // Run version script or changeset version
   cd(cwd);
   if (script) {
-    await $`${script}`;
+    await $.noquote`${script}`
   } else {
     let changesetsCliPkgJson = requireChangesetsCliPkgJson(cwd);
     let cmd = semver.lt(changesetsCliPkgJson.version, "2.0.0")
@@ -311,4 +236,79 @@ export async function runVersion({
     prTitle: finalPrTitle,
     prBody,
   };
+}
+
+/**
+ * 
+ * @param {*} param0 
+ * @returns 
+ */
+export async function runPublish({
+  cwd = process.cwd(),
+  script,
+}) {
+  // Run publish script or changeset status
+  cd(cwd);
+  if (script) {
+    await $.noquote`${script}`
+  } else {
+    await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} publish`;
+  }
+  
+  // Push git tags
+  await pushTags();
+
+  let { packages, tool } = await getPackages(cwd);
+  let releasedPackages = [];
+
+  if (tool !== "root") {
+    let newTagRegex = /New tag:\s+(@[^/]+\/[^@]+|[^/]+)@([^\s]+)/;
+    let packagesByName = new Map(packages.map((x) => [x.packageJson.name, x]));
+
+    for (let line of changesetPublishOutput.stdout.split("\n")) {
+      let match = line.match(newTagRegex);
+      if (match === null) {
+        continue;
+      }
+      let pkgName = match[1];
+      let pkg = packagesByName.get(pkgName);
+      if (pkg === undefined) {
+        throw new Error(
+          `Package "${pkgName}" not found.` +
+            "This is probably a bug in the action, please open an issue"
+        );
+      }
+      releasedPackages.push(pkg);
+    }
+  } else {
+    if (packages.length === 0) {
+      throw new Error(
+        `No package found.` +
+          "This is probably a bug in the action, please open an issue"
+      );
+    }
+    let pkg = packages[0];
+    let newTagRegex = /New tag:/;
+
+    for (let line of changesetPublishOutput.stdout.split("\n")) {
+      let match = line.match(newTagRegex);
+
+      if (match) {
+        releasedPackages.push(pkg);
+        break;
+      }
+    }
+  }
+
+  if (releasedPackages.length) {
+    return {
+      published: true,
+      publishedPackages: releasedPackages.map((pkg) => ({
+        name: pkg.packageJson.name,
+        version: pkg.packageJson.version,
+      })),
+    };
+  }
+
+  return { published: false };
 }

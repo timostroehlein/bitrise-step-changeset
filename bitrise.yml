@@ -32,6 +32,7 @@ workflows:
         run_if: true
         inputs:
         - run_status: true
+        - status_script: yarn changeset status
         - status_exists_description: Changeset exists
         - status_missing_description: Changeset missing
     - script:

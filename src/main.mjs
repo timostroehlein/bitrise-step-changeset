@@ -22,6 +22,9 @@ import { readChangesetState } from "./readChangesetState.mjs";
 import { createNpmrc } from "./utils.mjs";
 // @ts-check
 
+// https://github.com/google/zx/issues/126#issuecomment-850621670
+$.noquote = async (...args) => { const q = $.quote; $.quote = v => v; const p = $(...args); await p; $.quote = q; return p };
+
 // General
 const commitHash = process.env.BITRISE_GIT_COMMIT;
 // Status
