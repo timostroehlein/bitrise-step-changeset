@@ -11,7 +11,10 @@ import {
 import {
   pushTags,
   switchToMaybeExistingBranch,
-  reset
+  reset,
+  checkIfClean,
+  commitAll,
+  push
 } from "./gitUtils.mjs";
 import { readChangesetState } from "./readChangesetState.mjs";
 // @ts-check
@@ -282,15 +285,15 @@ export async function runVersion({
     .sort(sortTheThings);
 
   // Project with `commit: true` setting could have already committed files
-  if (!(await gitUtils.checkIfClean())) {
+  if (!(await checkIfClean())) {
     const finalCommitMessage = `${commitMessage}${
       !!preState ? ` (${preState.tag})` : ""
     }`;
-    await gitUtils.commitAll(finalCommitMessage);
+    await commitAll(finalCommitMessage);
   }
 
   // Push all changes
-  await gitUtils.push(branch, { force: true });
+  await push(branch, { force: true });
 
   // Create PR title and body
   const finalPrTitle = `${prTitle}${!!preState ? ` (${preState.tag})` : ""}`;

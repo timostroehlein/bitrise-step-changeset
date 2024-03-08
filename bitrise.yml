@@ -62,7 +62,7 @@ workflows:
         run_if: true
         inputs:
         - run_version: true
-        - version_script: yarn changeset version
+        # - version_script: yarn changeset version
         - version_branch: release/changeset
         - version_commit_message: changeset version
         - version_pr_title: Changeset Version
