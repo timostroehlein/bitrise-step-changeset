@@ -5,8 +5,7 @@ app:
   envs:
   # Secret params are defined in .bitrise.secrets.yml
   - BITRISE_GIT_COMMIT: $BITRISE_GIT_COMMIT
-  # Params
-  - BITRISEIO_GIT_BRANCH_DEST: main
+  - BITRISEIO_GIT_BRANCH_DEST: $BITRISEIO_GIT_BRANCH_DEST
   # If you want to share this step into a StepLib
   - BITRISE_STEP_ID: changeset
   - BITRISE_STEP_VERSION: "0.0.1"

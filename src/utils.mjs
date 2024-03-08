@@ -107,8 +107,14 @@ export function getChangelogEntry(changelog, version) {
 
 /**
  * 
- * @param {{ private: boolean; highestLevel: number }} a 
- * @param {{ private: boolean; highestLevel: number }} b 
+ * @param {{
+ *  private: boolean;
+ *  highestLevel: number
+ * }} a 
+ * @param {{
+ *  private: boolean;
+ *  highestLevel: number
+ * }} b 
  * @returns 
  */
 export function sortTheThings(

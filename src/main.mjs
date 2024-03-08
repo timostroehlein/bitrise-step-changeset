@@ -26,11 +26,11 @@ import { createNpmrc } from "./utils.mjs";
 $.noquote = async (...args) => { const q = $.quote; $.quote = v => v; const p = $(...args); await p; $.quote = q; return p };
 
 // General
-const commitHash = process.env.BITRISE_GIT_COMMIT;
+const commitHash = process.env.commit_hash;
+const branchDest = process.env.branch_dest;
 // Status
 const shouldRunStatusScript = process.env.run_status === "true";
 const statusScript = process.env.status_script;
-const statusBranchDest = process.env.status_branch_dest;
 const statusExistsDescription = process.env.status_exists_description;
 const statusMissingDescription = process.env.status_missing_description;
 // Version
@@ -39,7 +39,8 @@ const versionScript = process.env.version_script;
 const versionBranch = process.env.version_branch;
 const versionCommitMessage = process.env.version_commit_message;
 const versionPrTitle = process.env.version_pr_title;
-const versionPrBodyMaxLength = process.env.version_pr_body_max_length
+const versionPrDescription = process.env.version_pr_description;
+const versionPrBodyMaxLength = process.env.version_pr_body_max_length;
 // Publish
 const shouldRunPublishScript = process.env.run_publish === "true";
 const publishScript = process.env.publish_script;
@@ -63,7 +64,7 @@ if (shouldRunStatusScript) {
   const description = await runStatus({
     cwd: rootDir,
     script: statusScript,
-    branchDest: statusBranchDest,
+    branchDest,
     descriptionExists: statusExistsDescription,
     descriptionMissing: statusMissingDescription
   });
@@ -87,8 +88,10 @@ version: if (shouldRunVersionScript) {
     cwd: rootDir,
     script: versionScript,
     branch: versionBranch,
+    branchDest,
     commit: commitHash,
     prTitle: versionPrTitle,
+    prDescription: versionPrDescription,
     commitMessage: versionCommitMessage,
     hasPublishScript: shouldRunPublishScript,
     prBodyMaxCharacters: Number(versionPrBodyMaxLength),

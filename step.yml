@@ -68,6 +68,15 @@ toolkit:
 
 
 inputs:
+  # General
+  - commit_hash: $BITRISE_GIT_COMMIT
+    opts:
+      title: Commit hash
+      is_dont_change_value: true
+  - branch_dest: $BITRISEIO_GIT_BRANCH_DEST
+    opts:
+      title: Branch destination
+      is_dont_change_value: true
   # Status inputs
   - run_status: "false"
     opts:
@@ -79,12 +88,7 @@ inputs:
   - status_script:
     opts:
       title: Script
-      summary: Status script to run
-      category: Status
-  - status_branch_dest:
-    opts:
-      title: Branch destination
-      summary: Branch destination to run status command against, usually origin/main
+      summary: Custom status script to run, by default changeset status is run
       category: Status
   - status_exists_description:
     opts:
@@ -107,7 +111,7 @@ inputs:
   - version_script:
     opts:
       title: Script
-      summary: Version script to run
+      summary: Custom version script to run, by default changeset version is run
       category: Version
   - version_branch: "release/changeset"
     opts:
@@ -123,6 +127,11 @@ inputs:
     opts:
       title: PR title
       summary: Title of the PR
+      category: Version
+  - version_pr_description:
+    opts:
+      title: PR description
+      summary: Custom description of the PR, this step automatically adds most information to the description
       category: Version
   - version_pr_body_max_length: 32768
     opts:
@@ -140,7 +149,7 @@ inputs:
   - version_script:
     opts:
       title: Script
-      summary: Publish script to run
+      summary: Publish script to run, by default changeset publish is run
       category: Publish
 
 outputs:

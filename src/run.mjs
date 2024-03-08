@@ -52,6 +52,7 @@ export async function runStatus({
   if (releases.length > 0) {
     fullDescription = [
       descriptionExists,
+      "\n---",
       `\nThis PR includes changesets that affect ${releases.length} package${releases.length !== 1 ? 's' : ''}.`,
       "\n|Name|Type|Old Version|New Version|",
       "|----|----|-----------|-----------|",
@@ -86,34 +87,45 @@ const requireChangesetsCliPkgJson = (cwd) => {
   }
 };
 
+/**
+ * 
+ * @param {Object} param0
+ * @param {string} param0.description
+ * @param {string} param0.preState
+ * @param {{
+ *  highestLevel: number;
+ *  private: boolean;
+ *  content: any;
+ *  header: string;
+ * }[]} param0.changedPackagesInfo
+ * @param {number} param0.prBodyMaxCharacters
+ * @param {string} param0.branch
+ * @returns 
+ */
 export async function getVersionPrBody({
-  hasPublishScript,
+  description,
   preState,
   changedPackagesInfo,
   prBodyMaxCharacters,
   branch,
 }) {
-  let messageHeader = `This PR was opened by the [Changeset](https://github.com/timostroehlein/bitrise-step-changeset) Bitrise step. When you're ready to do a release, you can merge this and ${
-    hasPublishScript
-      ? `the packages will be published to npm automatically`
-      : `publish to npm yourself or [setup this action to publish automatically](https://github.com/changesets/action#with-publishing)`
-  }. If you're not ready to do a release yet, that's fine, whenever you add more changesets to ${branch}, this PR will be updated.
-`;
-  let messagePrestate = !!preState
-    ? `⚠️⚠️⚠️⚠️⚠️⚠️
-
-\`${branch}\` is currently in **pre mode** so this branch has prereleases rather than normal releases. If you want to exit prereleases, run \`changeset pre exit\` on \`${branch}\`.
-
-⚠️⚠️⚠️⚠️⚠️⚠️
-`
+  const messageHeader = description ?? `This PR was opened by the [Changeset](https://github.com/timostroehlein/bitrise-step-changeset) Bitrise step.
+    When you're ready to do a release, you can merge this and the packages will be published to npm automatically
+    If you're not ready to do a release yet, that's fine, whenever you add more changesets to ${branch}, this PR will be updated.
+  `;
+  const messagePrestate = !!preState
+    ? `⚠️⚠️⚠️⚠️⚠️⚠️\n
+    \`${branch}\` is currently in **pre mode** so this branch has prereleases rather than normal releases. If you want to exit prereleases, run \`changeset pre exit\` on \`${branch}\`.\n
+    ⚠️⚠️⚠️⚠️⚠️⚠️
+    `
     : "";
-  let messageReleasesHeading = `# Releases`;
+    const messageReleasesHeading = `# Releases\n---`;
 
   let fullMessage = [
     messageHeader,
     messagePrestate,
     messageReleasesHeading,
-    ...changedPackagesInfo.map((info) => `${info.header}\n\n${info.content}`),
+    ...changedPackagesInfo.map((info) => `${info.header}\n---\n${info.content}`),
   ].join("\n");
 
   // Check that the message does not exceed the size limit.
@@ -148,21 +160,23 @@ export async function getVersionPrBody({
  * @param {string} param0.cwd
  * @param {string} param0.script
  * @param {string} param0.branch
+ * @param {string} param0.branchDest
  * @param {string} param0.commit
  * @param {string} param0.prTitle
+ * @param {string} param0.prDescription
  * @param {string} param0.commitMessage
- * @param {boolean} param0.hasPublishScript
- * @param {string} param0.prBodyMaxCharacters
+ * @param {number} param0.prBodyMaxCharacters
  * @returns 
  */
 export async function runVersion({
   cwd = process.cwd(),
   script,
   branch,
+  branchDest,
   commit,
   prTitle = "Version Packages",
+  prDescription,
   commitMessage = "Version Packages",
-  hasPublishScript = false,
   prBodyMaxCharacters = MAX_CHARACTERS_PER_MESSAGE,
 }) {
   let { preState } = await readChangesetState(cwd);
@@ -221,9 +235,9 @@ export async function runVersion({
   // Create PR title and body
   const finalPrTitle = `${prTitle}${!!preState ? ` (${preState.tag})` : ""}`;
   const prBody = await getVersionPrBody({
-    hasPublishScript,
+    description: prDescription,
     preState,
-    branch,
+    branch: branchDest,
     changedPackagesInfo,
     prBodyMaxCharacters,
   });
@@ -236,7 +250,9 @@ export async function runVersion({
 
 /**
  * 
- * @param {*} param0 
+ * @param {Object} param0
+ * @param {string} param0.cwd
+ * @param {string} param0.script
  * @returns 
  */
 export async function runPublish({

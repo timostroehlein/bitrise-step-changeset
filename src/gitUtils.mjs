@@ -2,6 +2,9 @@
 import { $ } from 'zx';
 // @ts-check
 
+/**
+ * @returns {Promise<boolean>}
+ */
 export const setupUser = async () => {
   await $`git config user.name ${username}`;
   await $`git config user.email ${email}`;

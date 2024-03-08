@@ -6,7 +6,10 @@ import readChangesets from "@changesets/read";
 /**
  * 
  * @param {string} cwd 
- * @returns {{ preState: any | undefined; changesets: any[]; }}
+ * @returns {{
+ *  preState: any | undefined;
+ *  changesets: any[];
+ * }}
  */
 export async function readChangesetState(
   cwd = process.cwd()
