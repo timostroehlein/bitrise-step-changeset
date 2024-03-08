@@ -85,6 +85,7 @@ inputs:
     opts:
       title: Branch destination
       summary: Branch destination to run status command against, usually origin/main
+      category: Status
   - status_exists_description:
     opts:
       title: Changeset exists description
