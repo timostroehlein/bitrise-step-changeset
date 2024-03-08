@@ -28,7 +28,7 @@ export const push = async (
 };
 
 export const pushTags = async () => {
-  await $`git push origin --follow-tags`; // TODO: --tags
+  await $`git push origin --follow-tags`;
 };
 
 /**
@@ -61,7 +61,7 @@ export const reset = async (
  * @param {string} message 
  */
 export const commitAll = async (message) => {
-  await $`get add .`;
+  await $`git add .`;
   await $`git commit -m ${message}`
 };
 
