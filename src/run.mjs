@@ -216,6 +216,7 @@ export async function runVersion({
     await $.noquote`${alignDepsScript}`;
 
     // Create a changeset for align-deps if the min bump level version is exceeded
+    echo(JSON.stringify(changedPackagesInfo.map(info => info.highestLevel)));
     const highestLevel = Math.max(changedPackagesInfo.map(info => info.highestLevel));
     aligndeps: if (highestLevel >= BumpLevels[alignDepsMinBumpLevel]) {
       if (alignDepsPackageName === "") {
