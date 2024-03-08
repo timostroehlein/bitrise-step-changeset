@@ -76,7 +76,7 @@ inputs:
   - branch_dest: $BITRISEIO_GIT_BRANCH_DEST
     opts:
       title: Branch destination
-      is_dont_change_value: true
+      summary: Destination branch of the PR, this is usually main
   # Status inputs
   - run_status: "false"
     opts:
