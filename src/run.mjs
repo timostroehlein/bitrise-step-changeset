@@ -185,6 +185,7 @@ export async function runVersion({
   prBodyMaxCharacters = MAX_CHARACTERS_PER_MESSAGE,
 }) {
   const { preState } = await readChangesetState(cwd);
+  const { packages } = await getPackages(cwd);
 
   // Switch to branch and reset it to the latest commit
   await switchToMaybeExistingBranch(branch);
@@ -227,7 +228,7 @@ export async function runVersion({
         echo("Cannot create align deps without package name");
         break aligndeps;
       }
-      if (!changedPackages.some(pkg => pkg.packageJson.name === alignDepsPackageName)) {
+      if (!packages.some(pkg => pkg.packageJson.name === alignDepsPackageName)) {
         echo(`Cannot find package ${alignDepsPackageName} in repo`);
         break aligndeps;
       }

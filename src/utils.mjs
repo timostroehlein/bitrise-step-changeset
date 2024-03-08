@@ -19,7 +19,7 @@ export const BumpLevels = {
  * @returns {Promise<Map<any, any>>}
  */
 export async function getVersionsByDirectory(cwd) {
-  let { packages } = await getPackages(cwd);
+  const { packages } = await getPackages(cwd);
   return new Map(packages.map((x) => [x.dir, x.packageJson.version]));
 }
 
@@ -33,8 +33,8 @@ export async function getChangedPackages(
   cwd,
   previousVersions
 ) {
-  let { packages } = await getPackages(cwd);
-  let changedPackages = new Set();
+  const { packages } = await getPackages(cwd);
+  const changedPackages = new Set();
 
   for (let pkg of packages) {
     const previousVersion = previousVersions.get(pkg.dir);
@@ -53,13 +53,10 @@ export async function getChangedPackages(
  * @returns 
  */
 export function getChangelogEntry(changelog, version) {
-  let ast = unified().use(remarkParse).parse(changelog);
-
+  const ast = unified().use(remarkParse).parse(changelog);
   /** @type {number} */
   let highestLevel = BumpLevels.dep;
-
-  /** @type {Array<any>} */
-  let nodes = ast.children;
+  const nodes = ast.children;
   /** @type {{ index: number; depth: number; }| undefined} */
   let headingStartInfo;
   /** @type {number | undefined} */
@@ -131,7 +128,7 @@ export function sortTheThings(
 }
 
 export async function createNpmrc() {
-  let userNpmrcPath = `${process.env.HOME}/.npmrc`;
+  const userNpmrcPath = `${process.env.HOME}/.npmrc`;
   if (fs.existsSync(userNpmrcPath)) {
     echo("Found existing user .npmrc file");
     const userNpmrcContent = await fs.readFile(userNpmrcPath, "utf8");
