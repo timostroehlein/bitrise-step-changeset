@@ -110,15 +110,14 @@ export async function getVersionPrBody({
   branch,
 }) {
   const messageHeader = description === "" ? `This PR was opened by the [Changeset](https://github.com/timostroehlein/bitrise-step-changeset) Bitrise step.
-    When you're ready to do a release, you can merge this and the packages will be published to npm automatically.
-    If you're not ready to do a release yet, that's fine, whenever you add more changesets to ${branch === "" ? "the target branch" : branch}, this PR will be updated.
-  ` : description;
+When you're ready to do a release, you can merge this and the packages will be published to npm automatically.
+If you're not ready to do a release yet, that's fine, whenever you add more changesets to ${branch === "" ? "the target branch" : branch}, this PR will be updated.
+` : description;
   const messagePrestate = !!preState
     ? `⚠️⚠️⚠️⚠️⚠️⚠️\n
-    \`${branch === "" ? "the target branch" : branch}\` is currently in **pre mode** so this branch has prereleases rather than normal releases. If you want to exit prereleases, run \`changeset pre exit\` on \`${branch}\`.\n
-    ⚠️⚠️⚠️⚠️⚠️⚠️
-    `
-    : "";
+\`${branch === "" ? "the target branch" : branch}\` is currently in **pre mode** so this branch has prereleases rather than normal releases. If you want to exit prereleases, run \`changeset pre exit\` on \`${branch}\`.\n
+⚠️⚠️⚠️⚠️⚠️⚠️
+` : "";
   const messageReleasesHeading = `# Releases\n---`;
 
   let fullMessage = [
@@ -200,7 +199,7 @@ export async function runVersion({
   }
 
   // Get changelog of all packages
-  let changedPackages = await getChangedPackages(cwd, versionsByDirectory);
+  const changedPackages = await getChangedPackages(cwd, versionsByDirectory);
   const changedPackagesInfoPromises = Promise.all(
     changedPackages.map(async (pkg) => {
       let changelogContents = await fs.readFile(
