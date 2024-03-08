@@ -37,6 +37,7 @@ const statusMissingDescription = process.env.status_missing_description;
 // Version
 const shouldRunVersionScript = process.env.run_version === "true";
 const versionScript = process.env.version_script;
+const installScript = process.env.install_script;
 const alignDepsScript = process.env.align_deps_script;
 const alignDepsPackageName = process.env.align_deps_package_name;
 const alignDepsMinBumpLevel = process.env.align_deps_min_bump_level;
@@ -91,6 +92,7 @@ version: if (shouldRunVersionScript) {
   const { prTitle, prBody } = await runVersion({
     cwd: rootDir,
     script: versionScript,
+    installScript,
     alignDepsScript,
     alignDepsPackageName,
     alignDepsMinBumpLevel,

@@ -172,6 +172,7 @@ If you're not ready to do a release yet, that's fine, whenever you add more chan
 export async function runVersion({
   cwd = process.cwd(),
   script,
+  installScript,
   alignDepsScript,
   alignDepsPackageName,
   alignDepsMinBumpLevel,
@@ -242,7 +243,14 @@ export async function runVersion({
       // Get changes of all packages
       changedPackages = await getChangedPackages(cwd, previousVersions);
       changedPackagesInfo = await getChangedPackagesInfo(changedPackages);
+    } else {
+      echo(`Bumping of align-deps package not necessary ${highestLevel} < ${BumpLevels[alignDepsMinBumpLevel]}`);
     }
+  }
+
+  // Run install script
+  if (installScript) {
+    await $.noquote`${alignDepsScript}`;
   }
 
   // Project with `commit: true` setting could have already committed files
