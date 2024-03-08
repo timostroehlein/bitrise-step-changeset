@@ -54,8 +54,8 @@ const hasNonEmptyChangesets = changesets.some(
 );
 
 // Add output env variables
-await $`envman add --key CHANGESET_EXISTS --value "${hasChangesets}"`;
-await $`envman add --key CHANGESET_PUBLISHED --value "false"`;
+await $`envman add --key CHANGESET_EXISTS --value=${hasChangesets}`;
+await $`envman add --key CHANGESET_PUBLISHED --value="false"`;
 
 // Changeset status
 if (shouldRunStatusScript) {
@@ -95,9 +95,9 @@ version: if (shouldRunVersionScript) {
   });
 
   // Add output env variables
-  await $`envman add --key CHANGESET_PR_BRANCH --value "${versionBranch}"`;
-  await $`envman add --key CHANGESET_PR_TITLE --value "${prTitle}"`;
-  await $`envman add --key CHANGESET_PR_DESCRIPTION --value "${prBody}"`;
+  await $`envman add --key CHANGESET_PR_BRANCH --value=${versionBranch}`;
+  await $`envman add --key CHANGESET_PR_TITLE --value=${prTitle}`;
+  await $`envman add --key CHANGESET_PR_DESCRIPTION --value=${prBody}`;
 } else {
   echo("Changeset version disabled");
 }
@@ -123,8 +123,8 @@ publish: if (shouldRunPublishScript) {
 
   // Add output env variables
   if (result.published) {
-    await $`envman add --key CHANGESET_PUBLISHED --value "true"`;
-    await $`envman add --key CHANGESET_PUBLISHED_PACKAGES --value "${JSON.stringify(result.publishedPackages)}"`;
+    await $`envman add --key CHANGESET_PUBLISHED --value="true"`;
+    await $`envman add --key CHANGESET_PUBLISHED_PACKAGES --value=${JSON.stringify(result.publishedPackages)}`;
   }
 } else {
   echo("Changeset publish disabled");
