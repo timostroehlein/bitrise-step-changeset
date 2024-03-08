@@ -61,7 +61,7 @@ export const reset = async (
  * @param {string} message 
  */
 export const commitAll = async (message) => {
-  await $`git add .`;
+  await $`git add -A`;
   await $`git commit -m ${message}`
 };
 
