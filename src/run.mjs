@@ -183,7 +183,7 @@ export async function runVersion({
 
   // Switch to branch and reset it to the latest commit
   await switchToMaybeExistingBranch(branch);
-  await reset(commit);
+  // await reset(commit);
 
   let versionsByDirectory = await getVersionsByDirectory(cwd);
 
@@ -209,6 +209,7 @@ export async function runVersion({
       );
 
       let entry = getChangelogEntry(changelogContents, pkg.packageJson.version);
+      echo(entry);
       return {
         highestLevel: entry.highestLevel,
         private: !!pkg.packageJson.private,
