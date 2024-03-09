@@ -210,7 +210,10 @@ export async function runVersion({
       break aligndeps;
     }
     const changeset = {
-      summary: '',
+      summary: [
+        `- Updated preset`,
+        ...releases.map(release => `  - ${release.name}@${release.newVersion}`)
+      ].join('\n').replaceAll("@", "&commat;"),
       releases: [
         {
           name: alignDepsPackageName,
