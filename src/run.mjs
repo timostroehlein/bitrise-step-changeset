@@ -199,20 +199,41 @@ export async function runVersion({
   const { releases } = await fs.readJson(`${cwd}/out/changeset.json`);
   const highestLevel = Math.max(...releases.map(release => BumpLevels[release.type]));
 
+  // Create a changeset for align-deps if the min bump level version is exceeded
+  aligndeps: if (highestLevel >= BumpLevels[alignDepsMinBumpLevel]) {
+    if (alignDepsPackageName === "") {
+      echo("Cannot create align deps without package name");
+      break aligndeps;
+    }
+    if (!packages.some(pkg => pkg.packageJson.name === alignDepsPackageName)) {
+      echo(`Cannot find package ${alignDepsPackageName} in repo`);
+      break aligndeps;
+    }
+    const changeset = {
+      summary: '',
+      releases: [
+        {
+          name: alignDepsPackageName,
+          type: highestLevel === BumpLevels.major ? 'minor' : 'patch',
+        },
+      ],
+    };
+    await writeChangesets(changeset, cwd);
+  } {
+    echo(`Bumping of align-deps package not necessary ${highestLevel} < ${BumpLevels[alignDepsMinBumpLevel]}`);
+  }
+
   // Run version script or changeset version
   cd(cwd);
-  const version = async () => {
-    if (script) {
-      await $.noquote`${script}`;
-    } else {
-      let changesetsCliPkgJson = requireChangesetsCliPkgJson(cwd);
-      let cmd = semver.lt(changesetsCliPkgJson.version, "2.0.0")
-        ? "bump"
-        : "version";
-      await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} ${cmd}`;
-    }
+  if (script) {
+    await $.noquote`${script}`;
+  } else {
+    let changesetsCliPkgJson = requireChangesetsCliPkgJson(cwd);
+    let cmd = semver.lt(changesetsCliPkgJson.version, "2.0.0")
+      ? "bump"
+      : "version";
+    await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} ${cmd}`;
   }
-  await version();
 
   // Get changes of all packages
   let changedPackages = await getChangedPackages(cwd, previousVersions);
@@ -221,37 +242,6 @@ export async function runVersion({
   // Run align-deps
   if (alignDepsScript) {
     await $.noquote`${alignDepsScript}`;
-
-    // Create a changeset for align-deps if the min bump level version is exceeded
-    aligndeps: if (highestLevel >= BumpLevels[alignDepsMinBumpLevel]) {
-      if (alignDepsPackageName === "") {
-        echo("Cannot create align deps without package name");
-        break aligndeps;
-      }
-      if (!packages.some(pkg => pkg.packageJson.name === alignDepsPackageName)) {
-        echo(`Cannot find package ${alignDepsPackageName} in repo`);
-        break aligndeps;
-      }
-      const changeset = {
-        summary: '',
-        releases: [
-          {
-            name: alignDepsPackageName,
-            type: isMajorVersionIncrease ? 'minor' : 'patch',
-          },
-        ],
-      };
-      await writeChangesets(changeset, cwd);
-
-      // Run version script
-      await version();
-
-      // Get changes of all packages
-      changedPackages = await getChangedPackages(cwd, previousVersions);
-      changedPackagesInfo = await getChangedPackagesInfo(changedPackages);
-    } else {
-      echo(`Bumping of align-deps package not necessary ${highestLevel} < ${BumpLevels[alignDepsMinBumpLevel]}`);
-    }
   }
 
   // Run install script
