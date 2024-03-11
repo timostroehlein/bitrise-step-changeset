@@ -48,7 +48,6 @@ const versionPrDescription = process.env.version_pr_description;
 const versionPrBodyMaxLength = process.env.version_pr_body_max_length;
 // Publish inputs
 const shouldRunPublishScript = process.env.run_publish === "true";
-const publishBuildScript = process.env.publish_build_script;
 const publishScript = process.env.publish_script;
 
 // Check whether there are any changesets
@@ -131,8 +130,7 @@ publish: if (shouldRunPublishScript) {
   // Publish changesets
   const result = await runPublish({
     cwd: rootDir,
-    script: publishScript,
-    buildScript: publishBuildScript
+    script: publishScript
   });
 
   // Add output env variables
