@@ -284,14 +284,21 @@ export async function runVersion({
  * @param {Object} param0
  * @param {string} param0.cwd
  * @param {string} param0.script
+ * @param {string} param0.buildScript
  * @returns 
  */
 export async function runPublish({
   cwd = process.cwd(),
   script,
+  buildScript,
 }) {
-  // Run publish script or changeset status
+  // Run build script
   cd(cwd);
+  if (buildScript) {
+    await $.noquote`${buildScript}`;
+  }
+
+  // Run publish script or changeset status
   if (script) {
     await $.noquote`${script}`;
   } else {

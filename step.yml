@@ -169,9 +169,14 @@ inputs:
       is_required: true
       value_options: ["true", "false"]
       category: Publish
-  - version_script:
+  - publish_build_script:
     opts:
-      title: Script
+      title: Build script
+      summary: Build script to run before publishing the packages
+      category: Publish
+  - publish_script:
+    opts:
+      title: Publish script
       summary: Publish script to run, by default changeset publish is run
       category: Publish
 
