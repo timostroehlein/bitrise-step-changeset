@@ -156,10 +156,10 @@ inputs:
       title: PR description
       summary: Custom description of the PR, this step automatically adds most information to the description
       category: Version
-  - version_pr_body_max_length: 32768
+  - version_pr_description_max_length: 32768
     opts:
-      title: PR body max length
-      summary: Maximum amount of characters allowed in the PR body
+      title: PR description max length
+      summary: Maximum amount of characters allowed in the PR description
       category: Version
   # Publish inputs
   - run_publish: "false"
@@ -200,3 +200,7 @@ outputs:
     opts:
       title: PR description
       summary: Description which can be used to create a PR
+  - CHANGESET_PR_DESCRIPTION_LIMITED:
+    opts:
+      title: PR description limited
+      summary: Description limited by the given PR description max length

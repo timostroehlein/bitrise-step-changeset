@@ -89,7 +89,7 @@ version: if (shouldRunVersionScript) {
     break version;
   }
   echo("Changesets found, attempting to version packages");
-  const { prTitle, prBody } = await runVersion({
+  const { prTitle, prBody, prBodyLimited } = await runVersion({
     cwd: rootDir,
     script: versionScript,
     installScript,
@@ -110,6 +110,7 @@ version: if (shouldRunVersionScript) {
   await $`envman add --key CHANGESET_PR_BRANCH --value=${versionBranch}`;
   await $`envman add --key CHANGESET_PR_TITLE --value=${prTitle}`;
   await $`envman add --key CHANGESET_PR_DESCRIPTION --value=${prBody}`;
+  await $`envman add --key CHANGESET_PR_DESCRIPTION_LIMITED --value=${prBodyLimited}`;
 } else {
   echo("Changeset version disabled");
 }

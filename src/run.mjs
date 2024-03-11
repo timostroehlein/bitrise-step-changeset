@@ -101,7 +101,10 @@ const requireChangesetsCliPkgJson = (cwd) => {
  * }[]} param0.changedPackagesInfo
  * @param {number} param0.prBodyMaxCharacters
  * @param {string} param0.branch
- * @returns 
+ * @returns {{
+ *  prBody: string;
+ *  prBodyLimited: string;
+ * }}
  */
 export async function getVersionPrBody({
   description,
@@ -127,11 +130,12 @@ If you're not ready to do a release yet, that's fine, whenever you add more chan
     messageReleasesHeading,
     ...changedPackagesInfo.map((info) => `${info.header}\n---\n${info.content}`),
   ].join("\n");
+  let fullMessageLimited = fullMessage;
 
   // Check that the message does not exceed the size limit.
   // If not, omit the changelog entries of each package.
   if (fullMessage.length > prBodyMaxCharacters) {
-    fullMessage = [
+    fullMessageLimited = [
       messageHeader,
       messagePrestate,
       messageReleasesHeading,
@@ -143,7 +147,7 @@ If you're not ready to do a release yet, that's fine, whenever you add more chan
   // Check (again) that the message is within the size limit.
   // If not, omit all release content this time.
   if (fullMessage.length > prBodyMaxCharacters) {
-    fullMessage = [
+    fullMessageLimited = [
       messageHeader,
       messagePrestate,
       messageReleasesHeading,
@@ -151,7 +155,10 @@ If you're not ready to do a release yet, that's fine, whenever you add more chan
     ].join("\n");
   }
 
-  return fullMessage;
+  return {
+    prBody: fullMessage,
+    prBodyLimited: fullMessageLimited
+  };
 }
 
 /**
@@ -167,7 +174,11 @@ If you're not ready to do a release yet, that's fine, whenever you add more chan
  * @param {string} param0.prDescription
  * @param {string} param0.commitMessage
  * @param {number} param0.prBodyMaxCharacters
- * @returns 
+ * @returns {{
+ *  prTitle: string;
+ *  prBody: string;
+ *  prBodyLimited: string;
+ * }}
  */
 export async function runVersion({
   cwd = process.cwd(),
@@ -265,7 +276,7 @@ export async function runVersion({
 
   // Create PR title and body
   const finalPrTitle = `${prTitle}${!!preState ? ` (${preState.tag})` : ""}`;
-  const prBody = await getVersionPrBody({
+  const { prBody, prBodyLimited } = await getVersionPrBody({
     description: prDescription,
     preState,
     branch: branchDest,
@@ -276,6 +287,7 @@ export async function runVersion({
   return {
     prTitle: finalPrTitle,
     prBody,
+    prBodyLimited,
   };
 }
 
