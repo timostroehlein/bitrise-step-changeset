@@ -40,10 +40,10 @@ export async function runStatus({
 }) {
   // Run status script or changeset status
   cd(cwd);
+  await fs.ensureDir(`${cwd}/out`);
   if (script) {
-    await $.noquote`${script}`;
+    await $.noquote`${script} --output=out/changeset.json`;
   } else {
-    await fs.ensureDir(`${cwd}/out`);
     await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} status ${branchDest !== "" ? `--since=origin/${branchDest}` : ""} --output=out/changeset.json`;
   }
 
