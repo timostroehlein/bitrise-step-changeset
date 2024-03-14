@@ -39,12 +39,16 @@ export async function runStatus({
   descriptionMissing,
 }) {
   // Run status script or changeset status
-  cd(cwd);
-  await fs.ensureDir(`${cwd}/out`);
-  if (script) {
-    await $.noquote`${script} --output=out/changeset.json`;
-  } else {
-    await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} status ${branchDest !== "" ? `--since=origin/${branchDest}` : ""} --output=out/changeset.json`;
+  try {
+    cd(cwd);
+    await fs.ensureDir(`${cwd}/out`);
+    if (script) {
+      await $.noquote`${script} --output=out/changeset.json`;
+    } else {
+      await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} status ${branchDest !== "" ? `--since=origin/${branchDest}` : ""} --output=out/changeset.json`;
+    }
+  } catch (p) {
+    echo(`Changeset status: ${p.stderr}`)
   }
 
   // Read changeset.json and create description
