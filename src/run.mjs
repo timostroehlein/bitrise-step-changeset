@@ -41,7 +41,7 @@ export async function runStatus({
   // Run status script or changeset status
   try {
     cd(cwd);
-    await fs.ensureDir(`${cwd}/out`);
+    await fs.ensureFile(`${cwd}/out/changeset.json`);
     if (script) {
       await $.noquote`${script} --output=out/changeset.json`;
     } else {
@@ -52,9 +52,9 @@ export async function runStatus({
   }
 
   // Read changeset.json and create description
-  const { releases } = await fs.readJson(`${cwd}/out/changeset.json`);
+  const { releases } = await fs.readJson(`${cwd}/out/changeset.json`, { throws: false }) ?? {};
   let fullDescription = "";
-  if (releases.length > 0) {
+  if (releases?.length > 0) {
     fullDescription = [
       descriptionExists,
       "\n---",
