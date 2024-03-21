@@ -30,8 +30,12 @@ export const push = async (
   await $`git push origin ${branch} ${force ? '--force' : ''}`;
 };
 
-export const pushTags = async () => {
-  await $`git push origin --follow-tags`;
+/**
+ * 
+ * @param {string} branch 
+ */
+export const pushTags = async (branch) => {
+  await $`git push origin HEAD:${branch} --follow-tags`;
 };
 
 /**

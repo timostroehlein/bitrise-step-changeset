@@ -28,6 +28,7 @@ $.noquote = async (...args) => { const q = $.quote; $.quote = v => v; const p = 
 
 // General inputs
 const commitHash = process.env.commit_hash;
+const branch = process.env.branch;
 const branchDest = process.env.branch_dest;
 // Status inputs
 const shouldRunStatusScript = process.env.run_status === "true";
@@ -131,7 +132,8 @@ publish: if (shouldRunPublishScript) {
   // Publish changesets
   const result = await runPublish({
     cwd: rootDir,
-    script: publishScript
+    script: publishScript,
+    branch,
   });
 
   // Add output env variables

@@ -300,22 +300,24 @@ export async function runVersion({
  * @param {Object} param0
  * @param {string} param0.cwd
  * @param {string} param0.script
+ * @param {string} param0.branch
  * @returns 
  */
 export async function runPublish({
   cwd = process.cwd(),
   script,
+  branch,
 }) {
-  // Run publish script or changeset status
+  // Run publish script or changeset publish
   cd(cwd);
   if (script) {
     await $.noquote`${script}`;
   } else {
     await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} publish`;
   }
-  
+
   // Push git tags
-  await pushTags();
+  await pushTags(branch);
 
   let { packages, tool } = await getPackages(cwd);
   let releasedPackages = [];

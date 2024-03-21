@@ -74,6 +74,11 @@ inputs:
       title: Commit hash
       is_required: true
       is_dont_change_value: true
+  - branch: $BITRISE_GIT_BRANCH
+    opts:
+      title: Current branch
+      is_required: true
+      is_dont_change_value: true
   - branch_dest: $BITRISEIO_GIT_BRANCH_DEST
     opts:
       title: Branch destination
