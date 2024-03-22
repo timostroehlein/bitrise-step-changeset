@@ -310,10 +310,11 @@ export async function runPublish({
 }) {
   // Run publish script or changeset publish
   cd(cwd);
+  let changesetPublishOutput;
   if (script) {
-    await $.noquote`${script}`;
+    changesetPublishOutput = await $.noquote`${script}`;
   } else {
-    await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} publish`;
+    changesetPublishOutput = await $`node ${resolveFrom(cwd, "@changesets/cli/bin.js")} publish`;
   }
 
   // Push git tags
@@ -326,7 +327,7 @@ export async function runPublish({
     let newTagRegex = /New tag:\s+(@[^/]+\/[^@]+|[^/]+)@([^\s]+)/;
     let packagesByName = new Map(packages.map((x) => [x.packageJson.name, x]));
 
-    for (let line of changesetPublishOutput.stdout.split("\n")) {
+    for await (let line of changesetPublishOutput.stdout.split("\n")) {
       let match = line.match(newTagRegex);
       if (match === null) {
         continue;
@@ -351,7 +352,7 @@ export async function runPublish({
     let pkg = packages[0];
     let newTagRegex = /New tag:/;
 
-    for (let line of changesetPublishOutput.stdout.split("\n")) {
+    for await (let line of changesetPublishOutput.stdout.split("\n")) {
       let match = line.match(newTagRegex);
 
       if (match) {
