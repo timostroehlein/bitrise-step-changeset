@@ -44,6 +44,7 @@ const alignDepsPackageName = process.env.align_deps_package_name;
 const alignDepsMinBumpLevel = process.env.align_deps_min_bump_level;
 const versionBranch = process.env.version_branch;
 const versionCommitMessage = process.env.version_commit_message;
+const versionPushChanges = process.env.version_push_changes === "true";
 const versionPrTitle = process.env.version_pr_title;
 const versionPrDescription = process.env.version_pr_description;
 const versionPrBodyMaxLength = process.env.version_pr_body_max_length;
@@ -105,6 +106,7 @@ version: if (shouldRunVersionScript) {
     commitMessage: versionCommitMessage,
     hasPublishScript: shouldRunPublishScript,
     prBodyMaxCharacters: Number(versionPrBodyMaxLength),
+    pushChanges: versionPushChanges,
   });
 
   // Add output env variables

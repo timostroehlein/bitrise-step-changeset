@@ -151,6 +151,13 @@ inputs:
       title: Commit message
       summary: Version commit message for the changed files
       category: Version
+  - version_push_changes: "true"
+    opts:
+      title: Push changes
+      summary: Whether to push version changes to the remote
+      is_required: true
+      value_options: ["true", "false"]
+      category: Version
   - version_pr_title: "Changeset Version"
     opts:
       title: PR title

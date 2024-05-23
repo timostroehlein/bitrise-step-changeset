@@ -178,6 +178,7 @@ If you're not ready to do a release yet, that's fine, whenever you add more chan
  * @param {string} param0.prDescription
  * @param {string} param0.commitMessage
  * @param {number} param0.prBodyMaxCharacters
+ * @param {boolean} param0.pushChanges
  * @returns {Promise<{
  *  prTitle: string;
  *  prBody: string;
@@ -198,6 +199,7 @@ export async function runVersion({
   prDescription,
   commitMessage = "Version Packages",
   prBodyMaxCharacters = MAX_CHARACTERS_PER_MESSAGE,
+  pushChanges = true
 }) {
   const { preState } = await readChangesetState(cwd);
   const { packages } = await getPackages(cwd);
@@ -276,7 +278,7 @@ export async function runVersion({
   }
 
   // Push all changes
-  await push(branch, { force: true });
+  if (pushChanges) await push(branch, { force: true });
 
   // Create PR title and body
   const finalPrTitle = `${prTitle}${!!preState ? ` (${preState.tag})` : ""}`;
